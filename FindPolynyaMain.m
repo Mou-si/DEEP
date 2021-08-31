@@ -24,7 +24,7 @@ OpenWaterApartIDnum = [];
 DeathBook = zeros(size(SICLat));
 ReincarnationBook = {[]};
 %%
-for i = 1 : 5
+for i = 1 : length(Time)
     %% Prepare Surround Time SIC Series
     % TimeAdvance means compare with the before Time, now, how much we need
     % to calculate
