@@ -53,7 +53,7 @@ for i = 1 : length(Time)
         MaxOpenWater = max(LastOpenWater{2}, [], "all");
     end
     
-    %% Logical ID to Physical ID
+    %% Physical ID to Logical ID
     if i ~= 1
         [ReincarnationBooktemp, DeathBook] = Reincarnation(...
             IDnumBye, DeathBook, LastOpenWater{2}, LastOpenWater{1});

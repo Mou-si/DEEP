@@ -8,7 +8,7 @@ function [Time,...
 
 %% Time
 Time = ... The time you want to identify polynyas
-    datetime('2017-10-01') : datetime('2020-10-01');
+    datetime('2016-09-30') : datetime('2020-10-01');
 
 %% Read Data
 % we will read data as [SICDir \ SICFileName1 Timestr SICFileName2]
@@ -41,6 +41,11 @@ MapRange = ... Remapping for membership of openwater
 %% Match
 global IDCpacity
 IDCpacity = ... It is a constant for OverlapDye.m. If it 
-    10000;
+    1000000;
+
+%% Physical ID to Logical ID
+global ReincarnationTol
+ReincarnationTol = ... The tolerance for the Reincarnation
+    4;
 end
 % run the function by FindPolyunyaMain.m

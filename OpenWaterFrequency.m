@@ -1,4 +1,4 @@
-function [SICFrequency, MoveMeanSIC] = OpenWaterFrequency...
+function [SICFrequencyID, MoveMeanSIC] = OpenWaterFrequency...
     (SIC, SeriesLength, TimeAdvance, FrequencyThreshold, ...
     MoveMeanSIC)
 % We use this function to calculate which is the frequent open water. We
@@ -43,7 +43,7 @@ SICFrequencyPan(SICFrequencyPan < FrequencyThresholdPan) = 0;
 % core area
 SICFrequencyCore = bwlabel(SICFrequencyCore);
 SICFrequencyPan = bwlabel(SICFrequencyPan);
-SICFrequency = OverlapDye(SICFrequencyPan, SICFrequencyCore);
+SICFrequencyID = OverlapDye(SICFrequencyPan, SICFrequencyCore);
 end
 
 %% subfunction
