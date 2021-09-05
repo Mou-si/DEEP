@@ -18,11 +18,11 @@ MoveMeanSIC = zeros(size(SICLat, 1), size(SICLat, 2), SeriesLength + 1);
 MatchOpenWater = cell(2, 1);
 MatchOpenWaterInt = zeros(size(SICLat, 1), size(SICLat, 2));
 OpenWaterMergeQuan = 0;
-OpenWaterMergeIDnum = [];
+OpenWaterMergeIDnum = {};
 OpenWaterApartQuan = 0;
-OpenWaterApartIDnum = [];
+OpenWaterApartIDnum = {};
 DeathBook = zeros(size(SICLat));
-ReincarnationBook = {[]};
+ReincarnationBook = cell(length(Time), 1);
 %%
 for i = 1 : length(Time)
     %% Prepare Surround Time SIC Series
@@ -57,7 +57,7 @@ for i = 1 : length(Time)
     if i ~= 1
         [ReincarnationBooktemp, DeathBook] = Reincarnation(...
             IDnumBye, DeathBook, LastOpenWater{2}, LastOpenWater{1});
-        ReincarnationBook = [ReincarnationBook; ReincarnationBooktemp];
+        ReincarnationBook{i} = ReincarnationBooktemp;
     end
     
     %% Match Current Open Water To Long-lasting Open Water
@@ -70,18 +70,18 @@ for i = 1 : length(Time)
     MatchOpenWater{2} = OverlapDye(SICCurrent, LastOpenWater{2});
     LastOpen = LastOpenWater{2};
     OpenWater = MatchOpenWater{2};
-%     save(".\test9_20\"+datestr(Time(i), 'yyyymmdd')+"OpenWater.mat",'OpenWater');
-%     save(".\test9_20\"+datestr(Time(i), 'yyyymmdd')+"LastOpenWater.mat",'LastOpen');
+    save(".\test10\"+datestr(Time(i), 'yyyymmdd')+"OpenWater.mat",'OpenWater');
+    save(".\test10\"+datestr(Time(i), 'yyyymmdd')+"LastOpenWater.mat",'LastOpen');
     
     %% Detect Merging and Seperating of Open Water
     if i ~= 1
         [MergeIDnum, ApartIDnum] = ...
             MergeAndApart(IDnumMatch);
         % Get Merge And Apart Information
-        OpenWaterMergeIDnum = {OpenWaterMergeIDnum; MergeIDnum}; 
+        OpenWaterMergeIDnum = [OpenWaterMergeIDnum; MergeIDnum]; 
         % OpenWaterMergeIDnum: First row is the open water merge into, the
         % other are the merged open water.
-        OpenWaterApartIDnum = {OpenWaterApartIDnum; ApartIDnum};
+        OpenWaterApartIDnum = [OpenWaterApartIDnum; ApartIDnum];
         % OpenWaterApartIDnum: First row is the ID of the seperated open
         % water, the other are the open water seperating into.
     end

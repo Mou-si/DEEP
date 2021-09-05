@@ -71,6 +71,28 @@ IDnum0 = zeros(size(IDnumTotalGet));
 % overlap with the IDgive in the SIC2, and if it is not dyed (IDnum0 == 0),
 % it should be dyed as ID_SIC2.
 
+% if long-lasting open water seperate into more than one open waters, each
+% open water will be identified as different numbers.
+if KeepNewNum
+    if ~exist('MaxID', 'Var')
+        % ATTENTION: here the defult value of MaxID is the max ID in
+        % IDgive. If you forget input MaxID, the error will NOT display.
+        MaxID = max(IDTotalGet);
+    end
+    GiveID = unique(IDnumMatchGive);
+    for i = 1 : length(GiveID)
+        GiveIDnum = length(find(IDnumMatchGive == GiveID(i)));
+        if GiveIDnum >= 2
+            ApartMatchGet = IDnumMatchGet(IDnumMatchGive == GiveID(i));
+            for k = 1 : GiveIDnum
+                MaxID = MaxID + 1;
+                IDnum0(IDnumTotalGet == ApartMatchGet(k) & IDnum0 == 0)...
+                    = MaxID;
+            end
+        end
+    end
+end
+
 for i = 1 : length(IDnumMatch)
     TotalGetindex = IDTotalGet == IDnumMatchGet(i);
     TotalGiveSeries = IDTotalGive(TotalGetindex);
@@ -93,11 +115,6 @@ if KeepNewNum
     % MaxID is the maximal ID we have used. The new ID of new open water
     % should be larger than it to make sure that the new ID is not used,
     % and one ID represent one open water.
-    if ~exist('MaxID', 'Var')
-        % ATTENTION: here the defult value of MaxID is the max ID in
-        % IDgive. If you forget input MaxID, the error will NOT display.
-        MaxID = max(IDTotalGet);
-    end
     IDget(IDget > 0) = IDget(IDget > 0) + MaxID;
     IDget = IDget + IDget2;
     MaxIDnew = max(MaxID, max(IDget(:))); % refresh the MaxID

@@ -30,13 +30,15 @@ function DataAll = IncrementalCal(DataAll, TimeAdvance, MyFun, RawData, varargin
 % end
 
 % TimeAdvance should less than the length of time dim of DataAll
-if TimeAdvance > size(DataAll, 3)
-    TimeAdvance = size(DataAll, 3);
+Dim3DataAll = size(DataAll, 3);
+if TimeAdvance > Dim3DataAll
+    TimeAdvance = Dim3DataAll;
 end
 % delete the old data and give new data some place
 DataAll = DataAll(:, :, TimeAdvance + 1 : end);
 % calculate
+Dim3DataAll = Dim3DataAll - TimeAdvance;
 for j = 1 : TimeAdvance
-    DataAll(:, :, j) = MyFun(RawData, j, varargin{:});
+    DataAll(:, :, Dim3DataAll + j) = MyFun(RawData, j, varargin{:});
 end
 end
