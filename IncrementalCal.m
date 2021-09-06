@@ -37,8 +37,7 @@ end
 % delete the old data and give new data some place
 DataAll = DataAll(:, :, TimeAdvance + 1 : end);
 % calculate
-Dim3DataAll = Dim3DataAll - TimeAdvance;
-for j = 1 : TimeAdvance
-    DataAll(:, :, Dim3DataAll + j) = MyFun(RawData, j, varargin{:});
+for j = TimeAdvance : -1 : 1
+    DataAll(:, :, Dim3DataAll - j + 1) = MyFun(RawData, j, varargin{:});
 end
 end
