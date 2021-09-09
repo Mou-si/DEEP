@@ -71,22 +71,34 @@ IDnum0 = zeros(size(IDnumTotalGet));
 % overlap with the IDgive in the SIC2, and if it is not dyed (IDnum0 == 0),
 % it should be dyed as ID_SIC2.
 
+% the ID transformation is aimed at the long-lasting open water
 if KeepNewNum
     if ~exist('MaxID', 'Var')
         % ATTENTION: here the defult value of MaxID is the max ID in
         % IDgive. If you forget input MaxID, the error will NOT display.
         MaxID = max(IDTotalGet);
     end
+    % when a open water separate into more than one open water, each open
+    % water will get distinct ID, the ID are appended after the last MaxID
     GiveID = unique(IDnumMatchGive);
     for i = 1 : length(GiveID)
-        GiveIDnum = length(find(IDnumMatchGive == GiveID(i)));
-        if GiveIDnum >= 2
-            ApartMatchGet = IDnumMatchGet(IDnumMatchGive == GiveID(i));
-            for k = 1 : GiveIDnum
+        ApartMatchGet = IDnumMatchGet(IDnumMatchGive == GiveID(i));
+        if length(ApartMatchGet) >= 2
+            for k = 1 : length(ApartMatchGet)
                 MaxID = MaxID + 1;
                 IDnum0(IDnumTotalGet == ApartMatchGet(k) & IDnum0 == 0)...
                     = MaxID;
             end
+        end
+    end
+    % when open waters merge into one open water, that open water will get
+    % a new ID appended after the last MaxID
+    GetID = unique(IDnumMatchGet);
+    for i = 1 : length(GetID)
+        if length(find(IDnumMatchGet == GetID(i))) >= 2
+            MaxID = MaxID + 1;
+            IDnum0(IDnumTotalGet == GetID(i) & IDnum0 == 0)...
+                 = MaxID;
         end
     end
 end
@@ -126,7 +138,14 @@ end
 
 if nargout >= 2
     clear IDnumMatch
-    IDnumMatch.Get = IDnum0(~IDnumByeLogicla);
+    if nargout >= 3 % IDnumMatch is used in MergeAndApart function, 
+                    % new ID after overlap is needed
+        IDnumMatch.Get = IDnum0(~IDnumByeLogicla); 
+    elseif nargout == 2 % IDnumMatch is used in Reincarnation function, 
+                        % the input ID has been overlapd, it's no need to
+                        % output the overlaped ID
+        IDnumMatch.Get = nonzeros(IDnumMatchGet);
+    end
     IDnumMatch.Give = nonzeros(IDnumMatchGive);
     % IDnumBye means 0-Y or X-0 part
     IDnumTotalGive = mod(IDnumTotal, IDCpacity); % IDnumTotalGive means
