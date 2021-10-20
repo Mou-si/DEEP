@@ -1,5 +1,23 @@
 function [ReincarnationBook, DeathBook] = ...
     Reincarnation(IDnumBye, DeathBook, IDNow, IDOld)
+% Connect died polynya and brith polynya which have similar position
+%
+% input:
+%   IDnumBye can be got in OverlapDye in the part of Arrange Adjacent Time
+%       Open Water Into Same Order
+%   DeathBook is a matirx of map recording the Number of polynyas which
+%       have dead.
+%   IDNow and IDOld are the matirxs of map recording the lasting OpenWater
+%       at today and yesterday.
+%
+% output:
+%   ReincarnationBook is a struct including two same length vector: Give
+%       and Get. The ReincarnationBook.Give is the dead polynya; the
+%       ReincarnationBook.Get id the re-brith polynya.
+%   DeathBook is the same as the input ones but adds polynya that died
+%       today and deletes the rebrith one.
+
+%%
 IDnumBirth = IDnumBye.Birth;
 IDnumDeath = IDnumBye.Death;
 
@@ -7,6 +25,10 @@ IDnumDeath = IDnumBye.Death;
 if ~isempty(IDnumBirth)
     IDBirth = IntersectPosition(IDNow, IDnumBirth);
     [~, ReincarnationBook] = OverlapDye(IDBirth, DeathBook);
+    % delete re-brith number
+    for ii = 1 : length(ReincarnationBook.Give)
+        DeathBook(DeathBook == ReincarnationBook(ii).Give) = 0;
+    end
 else
     ReincarnationBook = [];
 end
