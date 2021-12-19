@@ -27,7 +27,7 @@ if ~isempty(IDnumBirth)
     [~, ReincarnationBook] = OverlapDye(IDBirth, DeathBook);
     % delete re-brith number
     for ii = 1 : length(ReincarnationBook.Give)
-        DeathBook(DeathBook == ReincarnationBook(ii).Give) = 0;
+        DeathBook(DeathBook == ReincarnationBook.Give(ii)) = 0;
     end
 else
     ReincarnationBook = [];
