@@ -163,6 +163,7 @@ if any(ReinFlag == 0)
             % If a reincranation neither be matched as a best fit open
             % water nor mapping to any previous open water, it will be
             % matched to all the series
+            AppendFrom = [AppendFrom (1 : size(ReinOrig, 2))];
         else
             OverlapNum = [];
             for i = 1 : size(ReinOrig, 2)
