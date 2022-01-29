@@ -61,7 +61,7 @@ if isfield(ReincarnationBook, 'Get')
             ReinCol = TotalDeathID(TotalDeathID(:, 1) == ReinGiveNum(k), 2);
             [ReinOrig, ReinAddi, AppendFrom] = ...% Match the reincarnation open water to the best fit series
                 ReinMatch(Result(1 : end - 1, ReinCol), ReinGetNum, ReinLastID);
-            TotalAppendFrom = [TotalAppendFrom ReinCol(AppendFrom)];
+            TotalAppendFrom = [TotalAppendFrom ReinCol(AppendFrom)'];
             TotalAppendTo = [TotalAppendTo size(Result, 2) + 1 : size(Result, 2) + size(ReinAddi, 2)];
             Result(:, ReinCol) = ReinOrig;
             Result = [Result ReinAddi];
