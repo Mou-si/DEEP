@@ -20,10 +20,26 @@ function [SICFrequencyID, MoveMeanSIC] = OpenWaterFrequency...
 
 %% calculate the frequency of open water
 % get moving mean SIC by incremental calculate
-MoveMeanSIC = IncrementalCal(MoveMeanSIC, TimeAdvance, ...
-    @WindowMean, SIC, SeriesLength);
+Dim3DataAll = size(MoveMeanSIC.Data, 3);
+if TimeAdvance > Dim3DataAll
+    TimeAdvance = Dim3DataAll;
+end
+% get new data order
+if isempty(MoveMeanSIC.i)
+    MoveMeanSIC.i = SeriesLength + 1 : -1 : 1;
+else
+    MoveMeanSIC.i = MoveMeanSIC.i + 1;
+    MoveMeanSIC.i(MoveMeanSIC.i > length(MoveMeanSIC.i)) = 1;
+end
+% calculate
+for j = TimeAdvance : -1 : 1
+    MeanRange = SIC.i <= length(SIC.i) - j + 1 & ...
+        SIC.i >= length(SIC.i) - j - SeriesLength + 1;
+     temp = mean(SIC.Data(:, :, MeanRange), 3);
+     MoveMeanSIC.Data(:, :, j == MoveMeanSIC.i) = temp;
+end
 % use the max mean SIC as the frequenct SIC
-SICFrequency = max(MoveMeanSIC, [], 3);
+SICFrequency = max(MoveMeanSIC.Data, [], 3);
 
 %% get frequent open water by core/pan threshold
 % get core/pan threshold

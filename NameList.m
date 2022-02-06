@@ -1,14 +1,17 @@
-function [Time,...
-    SICDir, SICFileName1, SICFileName2, SICLon, SICLat, ...
+function [Time, StartTime,...
+    SICDir, SICFileName1, SICFileName2, SICLon, SICLat, LandMask, ...
     Lim, ...
-    SeriesLength, FrequencyThreshold, MapRange]...
+    SeriesLength, FrequencyThreshold, MapRange, ...
+    HeatLossFlag, ...
+    RestartDir, RestartStride]...
     = NameList
 % Name list of main
 % you can run the function by FindPolyunyaMain.m
 
 %% Time
 Time = ... The time you want to identify polynyas
-    datetime('2016-09-30') : datetime('2020-10-01');
+    datetime('2016-04-15') : datetime('2017-03-01');
+StartTime = Time(1);
 
 %% Read Data
 % we will read data as [SICDir \ SICFileName1 Timestr SICFileName2]
@@ -23,6 +26,8 @@ SICLon = hdfread(...
     [SICDir, '\LongitudeLatitudeGrid-s3125-Antarctic3125.hdf'], 'Longitudes');
 SICLat = hdfread(...
     [SICDir, '\LongitudeLatitudeGrid-s3125-Antarctic3125.hdf'], 'Latitudes');
+% read land mask
+LandMask = ncread([SICDir, '\LandMaskAMSR3125.nc'], 'LandMask');
 
 %% Cut Open Sea
 Lim = ... The threshold for the openwater/ice
@@ -47,5 +52,12 @@ IDCpacity = ... It is a constant for OverlapDye.m. If it
 global ReincarnationTol
 ReincarnationTol = ... The tolerance for the Reincarnation
     4;
+
+%% Warm Season
+HeatLossFlag = HeatLossParms;
+
+%% BreakPoint
+RestartDir = 'C:\Users\13098\Documents\冰间湖识别\Scrip';
+RestartStride = 30;
 end
 % run the function by FindPolyunyaMain.m
