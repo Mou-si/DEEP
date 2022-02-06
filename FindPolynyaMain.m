@@ -161,9 +161,11 @@ for i = CircleStart : length(Time)
     
     %%
     if day(Time(i), 'dayofyear') == 31 % 01-31
-        WarmSeasonMat = isWarmSeason(Time(end), ...
-            LastOpenWater, MachineIDList, SICLon, SICLat, ...
-            length(Time), MachineIDSeries(end, :), HeatFluxMat);
+        if HeatLossFlag
+            WarmSeasonMat = isWarmSeason(Time(end), ...
+                LastOpenWater, MachineIDList, SICLon, SICLat, ...
+                length(Time), MachineIDSeries(end, :), HeatFluxMat);
+        end
     end
     %% Output Open Water Properties
     %Open Water Area
