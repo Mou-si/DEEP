@@ -1,35 +1,58 @@
 close all; clear all; clc;
 %% sets
+[path, ~] = fileparts(mfilename('fullpath'));
+addpath(genpath(path));
 % NameList
-[Time, StartTime,...
+[TimeTotal, StartTime, NewYear, ...
     SICDir, SICFileName1, SICFileName2, SICLon, SICLat, LandMask,...
     Lim, ...
     SeriesLength, FrequencyThreshold, MapRange, ...
     HeatLossFlag, ...
     RestartDir, RestartStride]...
     = NameList;
-% initialization
+% prepare
 if RestartDir(end) ~= '\'
     RestartDir = [RestartDir, '\'];
 end
-if StartTime ~= Time(1)
-    StartTime = datestr(StartTime, 'yyyymmdd');
-    load([RestartDir, '\restart', StartTime, '.mat']);
-    CircleStart = i;
+if StartTime ~= TimeTotal(1)
+    StartTimestr = datestr(StartTime, 'yyyymmdd');
+    load([RestartDir, '\restart', StartTimestr, '.mat']);
+    StartTime = datetime(StartTimestr, 'InputFormat', 'yyyyMMdd');
+    YearCircle = yeari;
+    DayCircle = i;
 else
-    CircleStart = 1;
+    TimeYear = [month(TimeTotal); day(TimeTotal)];
+    TimeYear = find(TimeYear(1, :) == str2double(NewYear(1 : 2)) & ...
+        TimeYear(2, :) == str2double(NewYear(4 : 5)));
+    TimeYear = [1, TimeYear(TimeYear > 1); ...
+        TimeYear(TimeYear > 1) - 1, length(TimeTotal)];
+    YearCircle = 1;
+    DayCircle = 1;
     SeriesLength = SeriesLength - 1;
-    TimeBefore = Time(1) - days(SeriesLength * 2 + 1); % Where before start read SIC
+    TimeBefore = TimeTotal(1) - days(SeriesLength * 2 + 1); % Where before start read SIC
     FrequencyThreshold = FrequencyThreshold ./ (SeriesLength + 1);
     FrequencyThreshold = sort(FrequencyThreshold, 'descend');
-    % Initial RAM Allocation
+    if (max(SICLat(:)) > -50 && min(SICLat(:)) < -80) || ...
+            (min(SICLat(:)) < 50 && max(SICLat(:)) > 80) && ...
+            abs(max(SICLon(:)) - min(SICLon(:))) > 350 && ...
+            median(SICLon(:)) > 160 && median(SICLon(:)) < 200
+        CircumPolar = true;
+    else
+        CircumPolar = false;
+    end
     Membership.Data = zeros(size(SICLat, 1), size(SICLat, 2), ...
         SeriesLength * 2 + 1, 1);
     Membership.i = [];
-    LastOpenWater = cell(2, 1);
     MoveMeanSIC.Data = zeros(size(SICLat, 1), size(SICLat, 2), ...
         SeriesLength + 1);
     MoveMeanSIC.i = [];
+end
+
+for yeari = YearCircle : size(TimeYear, 2)
+    Time = TimeTotal(TimeYear(1, yeari) : TimeYear(2, yeari));
+if StartTime == TimeTotal(1)
+    % Initial RAM Allocation
+    LastOpenWater = cell(2, 1);
     MatchOpenWater = cell(2, 1);
     MatchOpenWaterInt = zeros(size(SICLat, 1), size(SICLat, 2));
     OpenWaterMergeQuan = 0;
@@ -40,18 +63,24 @@ else
     TotalDeathID = [];
     MaxOpenWater = zeros(2, 1);
     MachineIDSeries = [];
-    if (max(SICLat(:)) > -50 && min(SICLat(:)) < -80) || ...
-            (min(SICLat(:)) < 50 && max(SICLat(:)) > 80) && ...
-            abs(max(SICLon(:)) - min(SICLon(:))) > 350 && ...
-            median(SICLon(:)) > 160 && median(SICLon(:)) < 200
-        CircumPolar = true;
-    else
-        CircumPolar = false;
-    end
 end
 
 %%
-for i = CircleStart : length(Time)
+for i = DayCircle : length(Time)
+    %% disp & restart
+    if mod(i, RestartStride) == 0
+        disp(['Saving Restart File of ', datestr(Time(i)), '.'])
+        RestartFiles = dir([RestartDir, 'restart*.mat']);
+        RestartFile = ...
+            [RestartDir, 'restart', datestr(Time(i), 'yyyymmdd'), '.mat'];
+        save(RestartFile)
+        disp(['Restart File Path: ', RestartFile])
+        delete([repmat(RestartDir, size(RestartFiles, 1), 1), ...
+            cat(1, RestartFiles.name)])
+    end
+    disp([num2str(i + TimeYear(1, yeari) - 1), '/', num2str(length(TimeTotal)), ...
+        '   ', datestr(Time(i))])
+    
     %% Prepare Surround Time SIC Series
     % TimeAdvance means compare with the before Time, now, how much we need
     % to calculate
@@ -128,8 +157,10 @@ for i = CircleStart : length(Time)
         MachineIDSeries(1, :) = 1 : MaxOpenWater(2);
     else
         MachineIDSeries(i, :) = MachineIDSeries(i - 1, :); % Copy the ID of the last day
-        [MachineIDSeries, TotalDeathID, TotalAppend] = ProcessSeries(MachineIDSeries, MergeIDnum, ApartIDnum, ...
-            MapStateApart, MaxOpenWater, nonzeros(DeathBook), TotalDeathID, ReincarnationBooktemp, ReinState);
+        [MachineIDSeries, TotalDeathID, TotalAppend] = ...
+            ProcessSeries(MachineIDSeries, MergeIDnum, ApartIDnum, ...
+            MapStateApart, MaxOpenWater, nonzeros(DeathBook), TotalDeathID, ...
+            ReincarnationBooktemp, ReinState);
         % TotalAppend contain the information of append column, first row
         % is the column copy from, the second row is the column copy to
     end
@@ -151,22 +182,6 @@ for i = CircleStart : length(Time)
         end
     end
     
-    %% disp & restart
-    if mod(i, RestartStride) == 0
-        RestartFiles = dir([RestartDir, 'restart*.mat']);
-        save([RestartDir, 'restart', datestr(Time(i), 'yyyymmdd'), '.mat'])
-        delete([repmat(RestartDir, size(RestartFiles, 1), 1),cat(1, RestartFiles.name)])
-    end
-    disp(datestr(Time(i)))
-    
-    %%
-    if day(Time(i), 'dayofyear') == 31 % 01-31
-        if HeatLossFlag
-            WarmSeasonMat = isWarmSeason(Time(end), ...
-                LastOpenWater, MachineIDList, SICLon, SICLat, ...
-                length(Time), MachineIDSeries(end, :), HeatFluxMat);
-        end
-    end
     %% Output Open Water Properties
     %Open Water Area
 %     Area = cell2mat(struct2cell(regionprops(MatchOpenWater{2}, 'Area')));
@@ -204,6 +219,18 @@ for i = CircleStart : length(Time)
 % 
 %     print(i,".\compare\test1\"+datestr(Time(i), 'yyyymmdd')+"_test1_20",'-dpng','-r1000');
 %     close(i);
+end
+
+if HeatLossFlag
+    WarmSeasonMat = isWarmSeason(Time(end), ...
+        LastOpenWater{2}, MachineIDList, SICLon, SICLat, ...
+        length(Time), MachineIDSeries(end, :), HeatFluxMat);
+else
+    WarmSeasonMat = month(Time) <= 3 | month(Time) >= 11;
+    WarmSeasonMat = repmat(WarmSeasonMat, size(MachineIDSeries, 2), 1);
+end
+
+StartTime = TimeTotal(1);
 end
 % save test15_Centroid OpenWaterCenLon OpenWaterCenLat;
 % save test15_Area OpenWaterArea;
