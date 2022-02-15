@@ -10,6 +10,7 @@ for i = 1 : size(Result, 2)
     ResultCol = nonzeros(Result(:, i));
     ResultCol = ResultCol(~isnan(ResultCol));
     if ResultCol(end) - ResultCol(1) == 0
+        Result(Result(:, i) == 0, i) = nan;
         FinalResult(j) = {Result(:, i)};
         j = j + 1;
         DeleteCol = [DeleteCol i];
@@ -37,8 +38,8 @@ while ~isempty(ResultNew)
                 % If a open water last for less than 40 days, the overlap
                 % time will be determined as the percentage of the overlap
                 % time by shorter last time
-                if length(ResultNew(~isnan(ResultNew(:, k)), k)) <= 40 || ...
-                        length(CurrentCol(~isnan(CurrentCol(:, i)), i)) <= 40
+                if length(ResultNew(~isnan(ResultNew(:, k)), k)) <= 60 || ...
+                        length(CurrentCol(~isnan(CurrentCol(:, i)), i)) <= 60
                     if double(length(find(ResultDiff == 0))) / ...
                             min(length(ResultNew(~isnan(ResultNew(:, k)), k)), ...
                             length(CurrentCol(~isnan(CurrentCol(:, i)), i))) >= 0.5
@@ -84,7 +85,7 @@ for i = 1 : length(Time)
     TotalLastOpen(i, 1 : length(LastOpenID)) = LastOpenIndex;
 end
 
-save test16_TotalID.mat
+save test16_TotalID TotalLastOpen
 %% Find the location of each logical ID open water
 % Pick out the sharing physical ID open water within a logical ID, and find
 % the pixel which the logical ID open water exist more than threshold days.
@@ -181,6 +182,7 @@ save test16_MergeLast MergeLast
 % every pair open water with same open water will all combined together.
 clear;clc;
 load test16_MergeLast.mat
+load test16_PhyArea.mat
 Time = ... %The time you want to identify polynyas
     datetime('2017-05-01') : datetime('2017-09-30');
 TotalMergeID = [];
@@ -230,11 +232,22 @@ for i = 1 : length(Time)
         end
     end
 end
-% Select the pair open water repeat more than 20 times as they are the same
-% logical ID open water
-Index = find(TotalMergeID(3, :) >= 20); 
-TotalMergeID = TotalMergeID(:, Index);
-TotalMergeID = TotalMergeID(1 : 2, :);
+% Input the total pixels of each logical ID open water 
+for i = 1 : size(TotalMergeID, 2)
+    TotalMergeID(4, i) = length(LogiIndex{TotalMergeID(1, i), 1});
+    TotalMergeID(5, i) = length(LogiIndex{TotalMergeID(2, i), 1});
+end
+% Derive the minimum number of pixel of each pair of logical ID open water,
+% if the pixel less than 100, the threshold is set to 10 days. If the pixel
+% more than 500, the threshold is set to 50 days. If the pixel is 100 to
+% 500, the threshold is linear increase between 10 to 50 days.
+MinIDIndex = min(TotalMergeID(4 : 5, :));
+MinIDIndex = (MinIDIndex - 100) ./ (500 - 100);
+MinIDIndex(MinIDIndex < 0) = 0;
+MinIDIndex(MinIDIndex > 1) = 1;
+MinIDIndex = ceil(MinIDIndex .* 40 + 10);
+Index = find(TotalMergeID(3, :) - MinIDIndex >= 0); 
+TotalMergeID = TotalMergeID(1 : 2, Index);
 [~, Sq] = sort(TotalMergeID(1, :));
 TotalMergeID = TotalMergeID(:, Sq);
 MergeIDnum = unique(TotalMergeID);
@@ -242,6 +255,7 @@ l = 1;
 % Combined all the pair open water with the same logical ID, e.g. three
 % pairs open water 122-132, 132-144, 122-155, they will be combined as the
 % same logical open water.
+TotalID = cell(1, 1);
 for i = 1 : length(MergeIDnum)
     if length(find(TotalMergeID == MergeIDnum(i))) >= 1
         NextID = MergeIDnum(i);
@@ -282,6 +296,8 @@ for i = 1 : length(TotalID)
     MergeID = TotalID{1, i};
     for k = 2 : length(MergeID)
         AllIndex(AllIndex == MergeID(k)) = MergeID(1);
+        LogiIndex{MergeID(1), 1} = ...
+            unique([LogiIndex{MergeID(1), 1}; LogiIndex{MergeID(k), 1}]);
         LogiIndex{MergeID(k), 1} = [];
     end
 end
@@ -301,5 +317,5 @@ for i = 1 : size(LogiIndex)
         m_scatter(lon1(LogiIndex{i, 2}),lat1(LogiIndex{i, 2}),1,'r','filled');
     end
 end
-print(1,"PhysicalIDNewMerge1",'-dpng','-r1000');
+print(1,"PhysicalIDNewMergeFlexThre",'-dpng','-r1000');
 close(1)
