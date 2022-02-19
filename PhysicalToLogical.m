@@ -1,6 +1,5 @@
-%% Load the original result
-clear; clc;
-load test16_Final.mat
+function [AllIndex, LogIncludePhy] = ...
+    PhysicalToLogical(Result, Time, SICLon, SICLat, StoragePath)
 %% Physical ID to Logical ID
 ResultNew = Result;
 DeleteCol = []; % Series with only one open water from birth to death
@@ -71,12 +70,10 @@ while ~isempty(ResultNew)
     j = j + 1;
 end
 
-save test16_Final Result FinalResult DeleteCol
+clearvars -except FinalResult Time SICLon SICLat StoragePath
 %% Derive the index of long-lasting open water
-Time = ... %The time you want to identify polynyas
-    datetime('2017-05-01') : datetime('2017-09-30');
 for i = 1 : length(Time)
-    load(".\test16\"+datestr(Time(i), 'yyyymmdd')+"LastOpenWater.mat");
+    load(StoragePath + datestr(Time(i), 'yyyymmdd') + "LastOpenWater.mat");
     LastOpenID = 1 : max(LastOpen, [], 'all');
     LastOpenIndex = cell(1, length(LastOpenID));
     for k = 1 : length(LastOpenID)
@@ -85,16 +82,13 @@ for i = 1 : length(Time)
     TotalLastOpen(i, 1 : length(LastOpenID)) = LastOpenIndex;
 end
 
-save test16_TotalID TotalLastOpen
+clearvars -except FinalResult Time SICLon SICLat TotalLastOpen StoragePath
 %% Find the location of each logical ID open water
 % Pick out the sharing physical ID open water within a logical ID, and find
 % the pixel which the logical ID open water exist more than threshold days.
 % If none of the exist day of pixel in the logical ID open water over the
-% threshold, all of the pixel will be considered as the location the
+% threshold, all of the pixel will be considered as the location of the
 % logical ID open water.
-clear;clc;
-load test16_Final.mat
-load test16_TotalID.mat
 LogiIndex = cell(length(FinalResult), 2);
 for i = 1 : length(FinalResult)
     TotalLogiLastOpen = FinalResult{1, i};
@@ -149,42 +143,29 @@ for i = 1 : length(FinalResult)
     end
 end
 
-load s3125grid.mat
-lon1 = reshape(lon, 1, []);
-lat1 = reshape(lat, 1, []);
-AllIndex = zeros(size(lon1));
+SICLon1D = reshape(SICLon, 1, []);
+SICLat1D = reshape(SICLat, 1, []);
+AllIndex = zeros(size(SICLon1D));
 for i = 1 : size(LogiIndex)
     if ~isempty(LogiIndex{i, 1})
     AllIndex(LogiIndex{i, 1}) = i; %Put all logical ID open water into an array
     end
 end
-AllIndex = reshape(AllIndex, size(lon));
-save test16_PhyArea LogiIndex AllIndex
+AllIndex = reshape(AllIndex, size(SICLon));
+clearvars -except FinalResult Time SICLon SICLat LogiIndex AllIndex StoragePath
 %% Find which current open water overlap on over two logical ID open water
-clear; clc;
-global IDCpacity
-IDCpacity = ... It is a constant for OverlapDye.m. If it 
-    10000;
-load test16_PhyArea.mat
-Time = ... %The time you want to identify polynyas
-    datetime('2017-05-01') : datetime('2017-09-30');
 MergeLast = cell(length(Time), 1);
 for i = 1 : length(Time)
-    load(".\test16\"+datestr(Time(i), 'yyyymmdd')+"OpenWater.mat");
+    load(StoragePath + datestr(Time(i), 'yyyymmdd') + "OpenWater.mat");
     MergeLast{i} = Overlap(AllIndex, OpenWater);
 end
 
-save test16_MergeLast MergeLast
+clearvars -except FinalResult Time SICLon SICLat LogiIndex AllIndex MergeLast StoragePath
 %% Find how many times two logical open water has been overlap by the same current open water
 % If a current open water overlap more than two logical open water, each 
 % two will be considered as a pair open water. If a pair open water occure
 % more than threshold times, this pair of open water will be combined. And
 % every pair open water with same open water will all combined together.
-clear;clc;
-load test16_MergeLast.mat
-load test16_PhyArea.mat
-Time = ... %The time you want to identify polynyas
-    datetime('2017-05-01') : datetime('2017-09-30');
 TotalMergeID = [];
 for i = 1 : length(Time)
     if isfield(MergeLast{i, 1}, 'Current')
@@ -246,7 +227,7 @@ MinIDIndex = (MinIDIndex - 100) ./ (500 - 100);
 MinIDIndex(MinIDIndex < 0) = 0;
 MinIDIndex(MinIDIndex > 1) = 1;
 MinIDIndex = ceil(MinIDIndex .* 40 + 10);
-Index = find(TotalMergeID(3, :) - MinIDIndex >= 0); 
+Index = TotalMergeID(3, :) - MinIDIndex >= 0; 
 TotalMergeID = TotalMergeID(1 : 2, Index);
 [~, Sq] = sort(TotalMergeID(1, :));
 TotalMergeID = TotalMergeID(:, Sq);
@@ -286,36 +267,74 @@ for i = 1 : length(MergeIDnum)
     end
 end
 
-save test16_MergeLast MergeLast TotalID
+clearvars -except FinalResult Time SICLon SICLat LogiIndex AllIndex MergeLast TotalID StoragePath
 %% Plot the physical ID open water
-clear; clc;
-load test16_PhyArea.mat
-load test16_MergeLast.mat
-load s3125grid.mat
+SingleIndex = 1 : length(FinalResult);
+LogIncludePhy = cell(1, 2);
+l = 1;
 for i = 1 : length(TotalID)
     MergeID = TotalID{1, i};
+    SingleIndex(SingleIndex == MergeID(1)) = [];
+    TotalPhysicalID = nonzeros(unique(FinalResult{1, MergeID(1)}));
     for k = 2 : length(MergeID)
         AllIndex(AllIndex == MergeID(k)) = MergeID(1);
         LogiIndex{MergeID(1), 1} = ...
             unique([LogiIndex{MergeID(1), 1}; LogiIndex{MergeID(k), 1}]);
         LogiIndex{MergeID(k), 1} = [];
+        SingleIndex(SingleIndex == MergeID(k)) = [];
+        TotalPhysicalID = [TotalPhysicalID; nonzeros(unique(FinalResult{1, MergeID(k)}))];
+    end
+    LogIncludePhy{l, 1} = MergeID(1);
+    LogIncludePhy{l, 2} = nonzeros(unique(TotalPhysicalID(~isnan(TotalPhysicalID))));
+    l = l + 1;
+end
+
+for i = 1 : length(SingleIndex)
+    if ~isempty(LogiIndex{SingleIndex(i), 2})
+        TotalPhysicalID = nonzeros(unique(FinalResult{1, MergeID(k)}));
+        LogIncludePhy{l, 1} = SingleIndex(i);
+        LogIncludePhy{l, 2} = TotalPhysicalID(~isnan(TotalPhysicalID));
+        l = l + 1;
     end
 end
+
 figure(1);
 m_proj('azimuthal equal-area','latitude',-90,'radius',50,'rectbox','on');
-m_grid('box','on','xaxislocation','top','xtick',[-180:30:180],'yticklabels',[ ; ],'ytick',[-80 -70 -60],'linewi',1,'tickdir','out','FontSize',8,'FontName','times new roman');
+m_grid('box','on','xaxislocation','top','xtick',[-180:30:180],'yticklabels',...
+    [ ; ],'ytick',[-80 -70 -60],'linewi',1,'tickdir','out','FontSize',8,'FontName','times new roman');
 m_coast('color','k');
 hold on
-lon1 = reshape(lon, 1, []);
-lat1 = reshape(lat, 1, []);
+SICLon1D = reshape(SICLon, 1, []);
+SICLat1D = reshape(SICLat, 1, []);
 
 AllIndex(AllIndex == 0) = nan;
-m_pcolor(lon,lat,AllIndex);
+m_pcolor(SICLon, SICLat, AllIndex);
 for i = 1 : size(LogiIndex)
     if ~isempty(LogiIndex{i, 1})
-        m_text(double(lon1(LogiIndex{i, 2})),double(lat1(LogiIndex{i, 2})),num2str(i),'fontsize',3);
-        m_scatter(lon1(LogiIndex{i, 2}),lat1(LogiIndex{i, 2}),1,'r','filled');
+        m_text(double(SICLon1D(LogiIndex{i, 2})), double(SICLat1D(LogiIndex{i, 2})), num2str(i), 'fontsize', 3);
+        m_scatter(SICLon1D(LogiIndex{i, 2}), SICLat1D(LogiIndex{i, 2}), 1, 'r', 'filled');
     end
 end
-print(1,"PhysicalIDNewMergeFlexThre",'-dpng','-r1000');
+print(1, "PhysicalIDNewMergeFlexThre", '-dpng', '-r1000');
 close(1)
+end
+
+function [MergeLastOpen] = Overlap(IDLongLast, IDCurrent)
+global IDCpacity
+IDTotal = IDLongLast + IDCurrent .* IDCpacity;
+IDTotal = unique(IDTotal(:));
+IDTotal(IDTotal < IDCpacity | mod(IDTotal, IDCpacity) == 0) = [];
+IDTotalLong = mod(IDTotal, IDCpacity);
+IDTotalCur = floor(IDTotal / IDCpacity);
+IDTotalCurnum = unique(IDTotalCur);
+MergeQuan = 1;
+MergeLastOpen = struct([]);
+for i = 1 : length(IDTotalCurnum)
+    LongLastID = unique(IDTotalLong(IDTotalCur == IDTotalCurnum(i)));
+    if length(LongLastID) >= 2
+        MergeLastOpen(MergeQuan).Current = IDTotalCurnum(i);
+        MergeLastOpen(MergeQuan).LongLast = LongLastID;
+        MergeQuan = MergeQuan + 1;
+    end
+end
+end

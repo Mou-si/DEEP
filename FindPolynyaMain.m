@@ -63,6 +63,9 @@ if StartTime == TimeTotal(1)
     TotalDeathID = [];
     MaxOpenWater = zeros(2, 1);
     MachineIDSeries = [];
+    % Set the Storage Path
+    CurrentFile = string(pwd);
+    StoragePath = CurrentFile + "/test16/";
 end
 
 %%
@@ -124,8 +127,8 @@ for i = DayCircle : length(Time)
     MatchOpenWater{2} = OverlapDye(SICCurrent, LastOpenWater{2});
     LastOpen = LastOpenWater{2};
     OpenWater = MatchOpenWater{2};
-%     save(".\test14\"+datestr(Time(i), 'yyyymmdd')+"OpenWater.mat",'OpenWater');
-%     save(".\test14\"+datestr(Time(i), 'yyyymmdd')+"LastOpenWater.mat",'LastOpen');
+%     save(StoragePath + datestr(Time(i), 'yyyymmdd') + "OpenWater.mat", 'OpenWater');
+%     save(StoragePath + datestr(Time(i), 'yyyymmdd') + "LastOpenWater.mat", 'LastOpen');
     
     %% Detect Merging and Seperating of Open Water
     if i ~= 1
