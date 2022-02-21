@@ -1,5 +1,6 @@
 function [AllIndex, LogIncludePhy] = ...
-    PhysicalToLogical(Result, Time, SICLon, SICLat, StoragePath)
+    PhysicalToLogical(Result, TotalLastOpen, MergeLast, Time)
+% MergeLast = OpenWaterCurrent in main
 %% Physical ID to Logical ID
 ResultNew = Result;
 DeleteCol = []; % Series with only one open water from birth to death
@@ -8,7 +9,7 @@ j = 1;
 for i = 1 : size(Result, 2)
     ResultCol = nonzeros(Result(:, i));
     ResultCol = ResultCol(~isnan(ResultCol));
-    if ResultCol(end) - ResultCol(1) == 0
+    if isempty(ResultCol) || ResultCol(end) - ResultCol(1) == 0
         Result(Result(:, i) == 0, i) = nan;
         FinalResult(j) = {Result(:, i)};
         j = j + 1;
@@ -70,19 +71,19 @@ while ~isempty(ResultNew)
     j = j + 1;
 end
 
-clearvars -except FinalResult Time SICLon SICLat StoragePath
+clearvars -except FinalResult Time TotalLastOpen MergeLast
 %% Derive the index of long-lasting open water
-for i = 1 : length(Time)
-    load(StoragePath + datestr(Time(i), 'yyyymmdd') + "LastOpenWater.mat");
-    LastOpenID = 1 : max(LastOpen, [], 'all');
-    LastOpenIndex = cell(1, length(LastOpenID));
-    for k = 1 : length(LastOpenID)
-        LastOpenIndex{1, k} = find(LastOpen == LastOpenID(k));
-    end
-    TotalLastOpen(i, 1 : length(LastOpenID)) = LastOpenIndex;
-end
+% for i = 1 : length(Time)
+%     load(StoragePath + datestr(Time(i), 'yyyymmdd') + "LastOpenWater.mat");
+%     LastOpenID = 1 : max(LastOpen, [], 'all');
+%     LastOpenIndex = cell(1, length(LastOpenID));
+%     for k = 1 : length(LastOpenID)
+%         LastOpenIndex{1, k} = find(LastOpen == LastOpenID(k));
+%     end
+%     TotalLastOpen(i, 1 : length(LastOpenID)) = LastOpenIndex;
+% end
 
-clearvars -except FinalResult Time SICLon SICLat TotalLastOpen StoragePath
+clearvars -except FinalResult Time TotalLastOpen TotalLastOpen MergeLast
 %% Find the location of each logical ID open water
 % Pick out the sharing physical ID open water within a logical ID, and find
 % the pixel which the logical ID open water exist more than threshold days.
@@ -131,36 +132,33 @@ for i = 1 : length(FinalResult)
     if ~isempty(TotalPhyID)
         [TotalPhyIDnum, ~, TotalPhyic] = unique(TotalPhyID);
         TotalPhyCounts = accumarray(TotalPhyic, 1);
-        [~, PhyMaxIndex] = max(TotalPhyCounts);
+%         [~, PhyMaxIndex] = max(TotalPhyCounts);
         if length(TotalPhyIDnum(TotalPhyCounts >= MinLength)) >= 1
             LogiIndex{i, 1} = TotalPhyIDnum(TotalPhyCounts >= MinLength);
             % Extract the pixel last over the threshold
-            LogiIndex{i, 2} = TotalPhyIDnum(PhyMaxIndex);
+%             LogiIndex{i, 2} = TotalPhyIDnum(PhyMaxIndex);
         else
             LogiIndex{i, 1} = TotalPhyIDnum;
-            LogiIndex{i, 2} = TotalPhyIDnum(PhyMaxIndex);
+%             LogiIndex{i, 2} = TotalPhyIDnum(PhyMaxIndex);
         end
     end
 end
 
-SICLon1D = reshape(SICLon, 1, []);
-SICLat1D = reshape(SICLat, 1, []);
-AllIndex = zeros(size(SICLon1D));
+% SICLon1D = reshape(SICLon, 1, []);
+AllIndex = zeros(size(MergeLast{1}));
 for i = 1 : size(LogiIndex)
     if ~isempty(LogiIndex{i, 1})
     AllIndex(LogiIndex{i, 1}) = i; %Put all logical ID open water into an array
     end
 end
-AllIndex = reshape(AllIndex, size(SICLon));
-clearvars -except FinalResult Time SICLon SICLat LogiIndex AllIndex StoragePath
+% AllIndex = reshape(AllIndex, size(SICLon));
+clearvars -except FinalResult Time LogiIndex AllIndex MergeLast
 %% Find which current open water overlap on over two logical ID open water
-MergeLast = cell(length(Time), 1);
 for i = 1 : length(Time)
-    load(StoragePath + datestr(Time(i), 'yyyymmdd') + "OpenWater.mat");
-    MergeLast{i} = Overlap(AllIndex, OpenWater);
+    MergeLast{i} = Overlap(AllIndex, MergeLast{i});
 end
 
-clearvars -except FinalResult Time SICLon SICLat LogiIndex AllIndex MergeLast StoragePath
+clearvars -except FinalResult Time LogiIndex AllIndex MergeLast
 %% Find how many times two logical open water has been overlap by the same current open water
 % If a current open water overlap more than two logical open water, each 
 % two will be considered as a pair open water. If a pair open water occure
@@ -267,56 +265,56 @@ for i = 1 : length(MergeIDnum)
     end
 end
 
-clearvars -except FinalResult Time SICLon SICLat LogiIndex AllIndex MergeLast TotalID StoragePath
+clearvars -except FinalResult Time LogiIndex AllIndex MergeLast TotalID
 %% Plot the physical ID open water
-SingleIndex = 1 : length(FinalResult);
+% SingleIndex = 1 : length(FinalResult);
 LogIncludePhy = cell(1, 2);
-l = 1;
+% l = 1;
 for i = 1 : length(TotalID)
     MergeID = TotalID{1, i};
-    SingleIndex(SingleIndex == MergeID(1)) = [];
+%     SingleIndex(SingleIndex == MergeID(1)) = [];
     TotalPhysicalID = nonzeros(unique(FinalResult{1, MergeID(1)}));
     for k = 2 : length(MergeID)
         AllIndex(AllIndex == MergeID(k)) = MergeID(1);
-        LogiIndex{MergeID(1), 1} = ...
-            unique([LogiIndex{MergeID(1), 1}; LogiIndex{MergeID(k), 1}]);
-        LogiIndex{MergeID(k), 1} = [];
-        SingleIndex(SingleIndex == MergeID(k)) = [];
+%         LogiIndex{MergeID(1), 1} = ...
+%             unique([LogiIndex{MergeID(1), 1}; LogiIndex{MergeID(k), 1}]);
+%         LogiIndex{MergeID(k), 1} = [];
+%         SingleIndex(SingleIndex == MergeID(k)) = [];
         TotalPhysicalID = [TotalPhysicalID; nonzeros(unique(FinalResult{1, MergeID(k)}))];
     end
-    LogIncludePhy{l, 1} = MergeID(1);
-    LogIncludePhy{l, 2} = nonzeros(unique(TotalPhysicalID(~isnan(TotalPhysicalID))));
-    l = l + 1;
+    LogIncludePhy{i, 1} = MergeID(1);
+    LogIncludePhy{i, 2} = nonzeros(unique(TotalPhysicalID(~isnan(TotalPhysicalID))));
+%     l = l + 1;
 end
 
-for i = 1 : length(SingleIndex)
-    if ~isempty(LogiIndex{SingleIndex(i), 2})
-        TotalPhysicalID = nonzeros(unique(FinalResult{1, MergeID(k)}));
-        LogIncludePhy{l, 1} = SingleIndex(i);
-        LogIncludePhy{l, 2} = TotalPhysicalID(~isnan(TotalPhysicalID));
-        l = l + 1;
-    end
-end
-
-figure(1);
-m_proj('azimuthal equal-area','latitude',-90,'radius',50,'rectbox','on');
-m_grid('box','on','xaxislocation','top','xtick',[-180:30:180],'yticklabels',...
-    [ ; ],'ytick',[-80 -70 -60],'linewi',1,'tickdir','out','FontSize',8,'FontName','times new roman');
-m_coast('color','k');
-hold on
-SICLon1D = reshape(SICLon, 1, []);
-SICLat1D = reshape(SICLat, 1, []);
-
-AllIndex(AllIndex == 0) = nan;
-m_pcolor(SICLon, SICLat, AllIndex);
-for i = 1 : size(LogiIndex)
-    if ~isempty(LogiIndex{i, 1})
-        m_text(double(SICLon1D(LogiIndex{i, 2})), double(SICLat1D(LogiIndex{i, 2})), num2str(i), 'fontsize', 3);
-        m_scatter(SICLon1D(LogiIndex{i, 2}), SICLat1D(LogiIndex{i, 2}), 1, 'r', 'filled');
-    end
-end
-print(1, "PhysicalIDNewMergeFlexThre", '-dpng', '-r1000');
-close(1)
+% for i = 1 : length(SingleIndex)
+%     if ~isempty(LogiIndex{SingleIndex(i), 2})
+%         TotalPhysicalID = nonzeros(unique(FinalResult{1, MergeID(k)}));
+%         LogIncludePhy{l, 1} = SingleIndex(i);
+%         LogIncludePhy{l, 2} = TotalPhysicalID(~isnan(TotalPhysicalID));
+%         l = l + 1;
+%     end
+% end
+% 
+% figure(1);
+% m_proj('azimuthal equal-area','latitude',-90,'radius',50,'rectbox','on');
+% m_grid('box','on','xaxislocation','top','xtick',[-180:30:180],'yticklabels',...
+%     [ ; ],'ytick',[-80 -70 -60],'linewi',1,'tickdir','out','FontSize',8,'FontName','times new roman');
+% m_coast('color','k');
+% hold on
+% SICLon1D = reshape(SICLon, 1, []);
+% SICLat1D = reshape(SICLat, 1, []);
+% 
+% AllIndex(AllIndex == 0) = nan;
+% m_pcolor(SICLon, SICLat, AllIndex);
+% for i = 1 : size(LogiIndex)
+%     if ~isempty(LogiIndex{i, 1})
+%         m_text(double(SICLon1D(LogiIndex{i, 2})), double(SICLat1D(LogiIndex{i, 2})), num2str(i), 'fontsize', 3);
+%         m_scatter(SICLon1D(LogiIndex{i, 2}), SICLat1D(LogiIndex{i, 2}), 1, 'r', 'filled');
+%     end
+% end
+% print(1, "PhysicalIDNewMergeFlexThre", '-dpng', '-r1000');
+% close(1)
 end
 
 function [MergeLastOpen] = Overlap(IDLongLast, IDCurrent)

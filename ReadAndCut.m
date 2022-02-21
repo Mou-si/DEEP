@@ -1,5 +1,6 @@
-function Membership = ReadAndCut(Membership, TimeAdvance, Time, ...
-        SICDir, SICFileName1, SICFileName2, LandMask, Lim, CircumPolar, MapRange)
+function [Membership, LossSIC] = ReadAndCut(Membership, TimeAdvance, Time, ...
+        LossSIC, SICDir, SICFileName1, SICFileName2, SICVarName, LandMask, ...
+        Lim, CircumPolar, MapRange)
 
 % TimeAdvance should less than the length of time dim of DataAll
 Dim3DataAll = size(Membership.Data, 3);
@@ -10,27 +11,53 @@ end
 if isempty(Membership.i)
     Membership.i = size(Membership.Data, 3) : -1 : 1;
 else
-    Membership.i = Membership.i + 1;
-    Membership.i(Membership.i > length(Membership.i)) = 1;
+    Membership.i = Membership.i + TimeAdvance;
+    Membership.i = mod(Membership.i - 0.5, length(Membership.i)) + 0.5;
 end
 % calculate
 for j = TimeAdvance : -1 : 1
-     SIC = ReadOneDay(Time, j, SICDir, SICFileName1, SICFileName2, LandMask);
-     SIC = CutOpenSea(SIC, Lim, CircumPolar);
-     temp = RemapMembership(SIC, MapRange);
-     Membership.Data(:, :, j == Membership.i) = temp;
+    [SIC, LossSIC] = ReadOneDay(Time, j, LossSIC, ...
+        SICDir, SICFileName1, SICFileName2, SICVarName, LandMask);
+    if LossSIC == 0
+        SIC = CutOpenSea(SIC, Lim, CircumPolar);
+        temp = RemapMembership(SIC, MapRange);
+        Membership.Data(:, :, j == Membership.i) = temp;
+    else
+        temp = j - LossSIC;
+        if temp <= 0
+            temp = length(Membership.i) - temp;
+        end
+        Membership.Data(:, :, j == Membership.i) = ...
+            Membership.Data(:, :, temp == Membership.i);
+    end
 end
 end
 
 %% Read Data
-function SIC = ReadOneDay(TimeEnd, j, ...
-    SICDir, SICFileName1, SICFileName2, LandMask)
+function [SIC, LossSIC] = ReadOneDay(TimeEnd, j, LossSIC, ...
+    SICDir, SICFileName1, SICFileName2, SICVarName, LandMask)
 TimeEnd = TimeEnd(end - j + 1);
 TimeStr = datestr(TimeEnd, 'yyyymmdd');
-SIC = ...
-    double(hdfread( ...
-    fullfile(SICDir, [SICFileName1, TimeStr, SICFileName2]), ...
-    'ASI Ice Concentration'));
+try
+    SIC = ...
+        double(hdfread( ...
+        fullfile(SICDir, [SICFileName1, TimeStr, SICFileName2]), ...
+        SICVarName));
+    LossSIC = 0;
+catch
+    LossSIC = LossSIC + 1;
+    warning(['SIC File ''', ...
+        fullfile(SICDir, [SICFileName1, TimeStr, SICFileName2]), ...
+        ''' hasn''t be found.', newline, ...
+        'The SIC file of ', datestr(TimeEnd), ' will be replaced by ', ...
+        datestr(TimeEnd - days(LossSIC)), '.'])
+    if LossSIC <= 3
+        SIC = [];
+        return
+    else
+        error('More than 3 consecutive SIC files were not found.')
+    end
+end
 SIC(logical(LandMask)) = NaN;
 end
 

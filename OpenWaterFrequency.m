@@ -28,8 +28,8 @@ end
 if isempty(MoveMeanSIC.i)
     MoveMeanSIC.i = SeriesLength + 1 : -1 : 1;
 else
-    MoveMeanSIC.i = MoveMeanSIC.i + 1;
-    MoveMeanSIC.i(MoveMeanSIC.i > length(MoveMeanSIC.i)) = 1;
+    MoveMeanSIC.i = MoveMeanSIC.i + TimeAdvance;
+    MoveMeanSIC.i = mod(MoveMeanSIC.i - 0.5, SeriesLength + 1) + 0.5;
 end
 % calculate
 for j = TimeAdvance : -1 : 1

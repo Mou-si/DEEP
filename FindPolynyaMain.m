@@ -4,7 +4,7 @@ close all; clear all; clc;
 addpath(genpath(path));
 % NameList
 [TimeTotal, StartTime, NewYear, ...
-    SICDir, SICFileName1, SICFileName2, SICLon, SICLat, LandMask,...
+    SICDir, SICFileName1, SICFileName2, SICVarName, SICLon, SICLat, LandMask,...
     Lim, ...
     SeriesLength, FrequencyThreshold, MapRange, ...
     HeatLossFlag, ...
@@ -52,8 +52,9 @@ for yeari = YearCircle : size(TimeYear, 2)
     Time = TimeTotal(TimeYear(1, yeari) : TimeYear(2, yeari));
 if StartTime == TimeTotal(1)
     % Initial RAM Allocation
+    LossSIC = 0;
+    LossData = false(length(Time), 1);
     LastOpenWater = cell(2, 1);
-    MatchOpenWater = cell(2, 1);
     MatchOpenWaterInt = zeros(size(SICLat, 1), size(SICLat, 2));
     OpenWaterMergeQuan = 0;
     OpenWaterMergeIDnum = cell(length(Time), 1);
@@ -63,19 +64,18 @@ if StartTime == TimeTotal(1)
     TotalDeathID = [];
     MaxOpenWater = zeros(2, 1);
     MachineIDSeries = [];
-    % Set the Storage Path
-    CurrentFile = string(pwd);
-    StoragePath = CurrentFile + "/test16/";
+    OpenWaterCurrent = cell(size(TimeYear, 2), 1);
+    TotalLastOpenWater.i = [];
 end
 
 %%
 for i = DayCircle : length(Time)
     %% disp & restart
-    if mod(i, RestartStride) == 0
-        disp(['Saving Restart File of ', datestr(Time(i)), '.'])
+    if mod(i - 1, RestartStride) == 0 && i ~= DayCircle
+        disp(['Saving Restart File of ', datestr(Time(i - 1)), '.'])
         RestartFiles = dir([RestartDir, 'restart*.mat']);
         RestartFile = ...
-            [RestartDir, 'restart', datestr(Time(i), 'yyyymmdd'), '.mat'];
+            [RestartDir, 'restart', datestr(Time(i - 1), 'yyyymmdd'), '.mat'];
         save(RestartFile)
         disp(['Restart File Path: ', RestartFile])
         delete([repmat(RestartDir, size(RestartFiles, 1), 1), ...
@@ -90,9 +90,13 @@ for i = DayCircle : length(Time)
     TimeAdvance = datenum(Time(i)) - datenum(TimeBefore);
     TimeBefore = Time(i);
     % read needed data and cut open seas
-    Membership = ReadAndCut(Membership, TimeAdvance, ...
+    [Membership, LossSIC] = ReadAndCut(Membership, TimeAdvance, ...
         Time(i) - days(SeriesLength) : Time(i) + days(SeriesLength), ...
-        SICDir, SICFileName1, SICFileName2, LandMask, Lim, CircumPolar, MapRange);
+        LossSIC, SICDir, SICFileName1, SICFileName2, SICVarName, LandMask, ...
+        Lim, CircumPolar, MapRange);
+    if LossSIC ~= 0
+        LossData(i) = true;
+    end
     
     %% Open Water Last
     % save the yesterday OpenWater
@@ -123,12 +127,15 @@ for i = DayCircle : length(Time)
         abs(diff(MapRange))) .* abs(diff(MapRange));
     % here SICNow is in the range of MapRange, NOT [0, 100] or [0, 1]
     SICCurrent = bwlabel(SICNow < 70);
-    MatchOpenWater{1} = MatchOpenWater{2};
-    MatchOpenWater{2} = OverlapDye(SICCurrent, LastOpenWater{2});
-    LastOpen = LastOpenWater{2};
-    OpenWater = MatchOpenWater{2};
+    OpenWaterCurrenttemp = OverlapDye(SICCurrent, LastOpenWater{2});
+    LastOpenwaterSparse = sparse(LastOpenWater{2});
+    LastOpenIndex = cell(1, MaxOpenWater(2));
+    for k = 1 : MaxOpenWater(2)
+        LastOpenIndex{1, k} = find(LastOpenwaterSparse == k);
+    end
+    TotalLastOpen(i, 1 : MaxOpenWater(2)) = LastOpenIndex;
+    OpenWaterCurrent{i} = sparse(OpenWaterCurrenttemp);
 %     save(StoragePath + datestr(Time(i), 'yyyymmdd') + "OpenWater.mat", 'OpenWater');
-%     save(StoragePath + datestr(Time(i), 'yyyymmdd') + "LastOpenWater.mat", 'LastOpen');
     
     %% Detect Merging and Seperating of Open Water
     if i ~= 1
@@ -145,10 +152,20 @@ for i = DayCircle : length(Time)
     
     %% Match Seperating and Reinranation Open Water to Previous Open Water
     if i <= 30
-        TotalLastOpenWater(:, :, i) = LastOpen;
+        TotalLastOpenWater.i = [i, TotalLastOpenWater.i];
     else
-        TotalLastOpenWater = TotalLastOpenWater(:, :, 2 : end);
-        TotalLastOpenWater = cat(3, TotalLastOpenWater, LastOpen);
+        TotalLastOpenWater.i = TotalLastOpenWater.i + TimeAdvance;
+        TotalLastOpenWater.i = mod(TotalLastOpenWater.i - 0.5, 30) + 0.5;
+    end
+    if i == 1
+        TotalLastOpenWater.Data(:, :, i) = LastOpenWater{2};
+    else
+%         TotalLastOpenWater = TotalLastOpenWater(:, :, 2 : end);
+%         TotalLastOpenWater = cat(3, TotalLastOpenWater, LastOpenWater{2});
+        for j = TimeAdvance : -1 : 1
+            TotalLastOpenWater.Data(:, :, TotalLastOpenWater.i == j) = ...
+                LastOpenWater{2};
+        end
     end
     if i ~= 1
         [MapStateApart,ReinState] = ...
@@ -169,8 +186,14 @@ for i = DayCircle : length(Time)
     end
     
     %% judge season
-    MachineIDList = unique(LastOpenWater{2}, 'stable');
-    MachineIDList = MachineIDList(2 : end);
+    if i == 1
+        MachineIDList = unique(LastOpenwaterSparse);
+        SkipNum = find(~ismember(MachineIDSeries, MachineIDList));
+    end
+    MachineIDList = MachineIDSeries(i, :);
+    MachineIDList(SkipNum) = [];
+    MachineIDList = unique(MachineIDList)';
+    MachineIDList(isnan(MachineIDList)) = [];
     if HeatLossFlag
         MaxHeatFlux = HeatLoss(LastOpenWater{2}, ...
             MachineIDList, SICLon, SICLat, Time(i));
@@ -232,6 +255,12 @@ else
     WarmSeasonMat = month(Time) <= 3 | month(Time) >= 11;
     WarmSeasonMat = repmat(WarmSeasonMat, size(MachineIDSeries, 2), 1);
 end
+MachineIDSeries(LossData, :) = NaN;
+MachineIDSeries2 = MachineIDSeries;
+MachineIDSeries2(WarmSeasonMat') = NaN;
+
+[AllIndex, LogIncludePhy] = ...
+    PhysicalToLogical(MachineIDSeries2, TotalLastOpen, OpenWaterCurrent, Time);
 
 StartTime = TimeTotal(1);
 end

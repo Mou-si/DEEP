@@ -34,7 +34,7 @@ Time = Time - days((Heat_MovingMeanDays - 1) ./ 2 + Heat_MovingMaxDays - 1);
 TimeStr = datestr(Time, Heat_TimeForm);
 TimeEndDay = day(Time, 'dayofyear');
 FileDirSingle = fullfile(Heat_FileDir, [Heat_Files1, TimeStr, Heat_Files2]);
-MeanHeatFlux = zeros(size(MachineIDList, 1), 1);
+MeanHeatFlux = nan(size(MachineIDList, 1), 1);
 
 %% read data
 % solar radiation
@@ -90,6 +90,9 @@ for i = 1 : size(MachineIDList, 1)
     SICLon2 = SICLon(temp);
     SICLat2 = SICLat(temp);
     PolynyaRange = [min(SICLon2); max(SICLon2); min(SICLat2); max(SICLat2)];
+    if isempty(PolynyaRange)
+        continue
+    end
     
     if abs(PolynyaRange(2) - PolynyaRange(1)) > 180
         Cross0 = 1;

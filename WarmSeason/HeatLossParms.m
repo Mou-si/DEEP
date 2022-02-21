@@ -135,7 +135,11 @@ if ~isequal(Heat_Files2(end - 2 : end), '.nc')
     error('Input reanalysis data should be in .nc format');
 end
 OneFile = dir(fullfile(Heat_FileDir, [Heat_Files1, '*', Heat_Files2]));
-FileDirtemp = fullfile(Heat_FileDir, OneFile(1).name);
+try
+    FileDirtemp = fullfile(Heat_FileDir, OneFile(1).name);
+catch
+    error('The reanalysis data file for WarmSeason Mode has''nt be found.')
+end
 LonHeat = ncread(FileDirtemp, 'longitude');
 LatHeat = ncread(FileDirtemp, 'latitude');
 
