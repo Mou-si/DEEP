@@ -1,4 +1,4 @@
-function [Membership, LossSIC] = ReadAndCut(Membership, TimeAdvance, Time, ...
+function [Membership, LossSIC] = ReadAndCut_PSSM(Membership, TimeAdvance, Time, ...
         In_TimeGap, LossSIC, In_SICFile, In_Lim, In_MapRange, In_FastIceFlag)
 
 % get new data order
@@ -16,7 +16,7 @@ for j = TimeAdvance : -1 : 1
     if In_FastIceFlag
         SIC = MaskFastIce(SIC, Time(end - j + 1), TimeAdvance);
     end
-    
+
     if LossSIC == 0
         SIC = CutOpenSea(SIC, In_Lim);
         if diff(In_MapRange) > 0
@@ -38,6 +38,7 @@ end
 
 %% Read Data
 function [SIC, LossSIC] = ReadOneDay(TimeEnd, j, LossSIC, In_SICFile, In_TimeGap)
+
 TimeEnd = TimeEnd(end - j + 1);
 TimeStr = datestr(TimeEnd, 'yyyymmdd');
 FileNameNo = 1;
@@ -50,30 +51,11 @@ if ~isempty(In_TimeGap)
     end
 end
 try
-    switch In_SICFile.Name2{FileNameNo}(end - 2 : end)
-        case 'hdf'
-            SIC = ...
-                hdfread( ...
-                fullfile(In_SICFile.Dir, ...
-                [In_SICFile.Name1{FileNameNo}, TimeStr, In_SICFile.Name2{FileNameNo}]), ...
-                In_SICFile.VarName);
-        case '.nc'
-            SIC = ...
-                ncread( ...
-                fullfile(In_SICFile.Dir, ...
-                [In_SICFile.Name1{FileNameNo}, TimeStr, In_SICFile.Name2{FileNameNo}]), ...
-                In_SICFile.VarName);
-        case 'mat'
-            SIC = ...
-                load( ...
-                fullfile(In_SICFile.Dir, ...
-                [In_SICFile.Name1{FileNameNo}, TimeStr, In_SICFile.Name2{FileNameNo}]), ...
-                In_SICFile.VarName);
-            SIC = SIC.Polynya;
-        otherwise
-            error(['Unknow Input File Format.', newlines, ...
-                'The Exist formats are .nc, .hdf, .mat (variable name should be ''Polynya'').'])
-    end
+    SIC = ...
+        load( ...
+        fullfile(In_SICFile.Dir, ...
+        [In_SICFile.Name1{FileNameNo}, TimeStr, In_SICFile.Name2{FileNameNo}]), ...
+        In_SICFile.VarName);
     LossSIC = 0;
 catch
     LossSIC = LossSIC + 1;
@@ -90,6 +72,7 @@ catch
         error('More than 5 consecutive SIC files were not found.')
     end
 end
+SIC = SIC.Polynya;
 SIC(logical(In_SICFile.LandMask)) = NaN;
 end
 
@@ -102,8 +85,16 @@ OpenWater = bwlabel(OpenWater);
 Areatemp = regionprops(OpenWater, 'Area');
 Areatemp = cat(1, Areatemp.Area);
 Areatemp = find(Areatemp == max(Areatemp), 1);
+Areatemp = OpenWater == Areatemp;
+Areatemp = imdilate(Areatemp, ones(3));
+SIC(Areatemp) = 0;
+OpenWater = (SIC <= Lim);
+OpenWater = bwlabel(OpenWater);
+Areatemp = regionprops(OpenWater, 'Area');
+Areatemp = cat(1, Areatemp.Area);
+Areatemp = find(Areatemp == max(Areatemp), 1);
 SIC(OpenWater == Areatemp) = 100;
-SIC(isnan(SIC)) = 100;
+SIC(isnan(SIC)) = 1;
 end
 
 %% Remapping membership

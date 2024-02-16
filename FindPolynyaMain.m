@@ -1,66 +1,157 @@
-close all; clear all; clc;
+function FindPolynyaMain(NameList_Name, varargin)
+% the main code to identify, trace the polynya and create the DEEP-AA
+% dataset.
+% 
+% Syntax
+%   FindPolynyaMain(NameList)
+%   FindPolynyaMain(___, 'clc', clcKey)
+%   FindPolynyaMain(___, 'close', closeKey)
+%   FindPolynyaMain(___, 'diary', diaryKey)
+% 
+% Description
+%   FindPolynyaMain(NameList) identified, trace the polynya and create a
+%       dataset. The "NameList" here is a char of the name of the file 
+%       recording parameters of the algorithm.
+%   FindPolynyaMain(___, 'clc', clcKey) the option to clear the commond
+%       window. 'on' is defult.
+%   FindPolynyaMain(___, 'close', closeKey) the option to clear figures. 
+%       'on' is defult.
+%   FindPolynyaMain(___, 'diary', diaryKey) the option to write the diary, 
+%       which is shown on screen. 'off' is defult.
+% 
+% Examples
+%   % Create a polynya dataset basing on the parameters in NameList.m
+%   FindPolynyaMain('NameList')
+%   % You can find the dataset in the directory of In.Save.Path recorded
+%   in NameList.m
+%   
+%   % Create the dataset with a diary
+%   FindPolynyaMain('NameList', 'diary', 'on')
+%   disp('the diary is ', ...
+%       [fileparts(which(NameList)), '\Diary_', NameList])
+% 
+% Input Arguments
+%   NameList - Parameter list of the algorithm
+%       char | string (vector)
+%       specified as a character vector or string indicating the name of
+%       the parameter list file of the algorithm. The parameter list file
+%       (name list file) should be a .m file and preferably in the same
+%       path as this file.
+%   clcKey - on-off of clc
+%       'on' (defult) | 'off'
+%       the switch turing on/off of the clc command (clear the commond
+%       window).
+%   closeKey - on-off of close
+%       'on' (defult) | 'off'
+%       the switch turing on/off of the close command (close all figures).
+%   diaryKey - on-off of diary
+%       'on'|'off' (defult)
+%       the switch turing on/off of the diary, which will record what shown
+%       on screen and the output file will be named as 'Diary_'+NameList in
+%       the path of this script.
+% 
+% Onput
+%   This function will output 1) a dataset of daily edge of each polynya
+%   in Antarctica (DEEP-AA dataset); 2) a txt file recorded the parameters
+%   input called 'Input.txt'.
+% 
+% Tips
+%   Please specify only one NameList parameter file at a time. And the
+%   warning is important here, so keep "warning on".
+
+closeFlag = true;
+clcFlag = true;
+DiaryFlag = false;
+for i = 1 : length(varargin)
+    switch varargin{i}
+        case 'close'
+            closeFlag = varargin{i + 1};
+            if isequal(closeFlag, 'off')
+                closeFlag = false;
+            end
+        case 'clc'
+            clcFlag = varargin{i + 1};
+            if isequal(clcFlag, 'off')
+                clcFlag = false;
+            end
+        case 'diary'
+            DiaryFlag = varargin{i + 1};
+            if isequal(DiaryFlag, 'on')
+                DiaryFlag = true;
+            end
+    end
+end
+if closeFlag
+    close all;
+end
+if clcFlag
+    clc;
+end
+if DiaryFlag
+    fprintf(['Diary: ON\nDiary path: ', ...
+        fileparts(which(NameList_Name)), '\Diary_', NameList_Name, '\n\n'])
+    diary([fileparts(which(NameList_Name)), '\Diary_', NameList_Name])
+end
+fprintf(['<strong>** ', NameList_Name, ' **</strong>\n\n'])
 %% sets
+disp(['[', datestr(now), ']   Loading parameters...'])
 [path, ~] = fileparts(mfilename('fullpath'));
 addpath(genpath(path));
 % NameList
-[TimeTotal, StartTime, NewYear, ...
-    SICDir, SICFileName1, SICFileName2, SICVarName, SICLon, SICLat, LandMask,...
-    Lim, ...
-    SeriesLength, FrequencyThreshold, MapRange, ...
-    HeatLossFlag, ...
-    RestartDir, RestartStride]...
-    = NameList;
+In = eval(NameList_Name);
+In.SICLon(In.SICLon < 0) = In.SICLon(In.SICLon < 0) + 360;
+CheckParameters(In)
+PrintIn(In)
 % prepare
-if RestartDir(end) ~= '\'
-    RestartDir = [RestartDir, '\'];
+if In.RestartDir(end) ~= '\'
+    In.RestartDir = [In.RestartDir, '\'];
 end
-if StartTime ~= TimeTotal(1)
-    StartTimestr = datestr(StartTime, 'yyyymmdd');
-    load([RestartDir, '\restart', StartTimestr, '.mat']);
-    StartTime = datetime(StartTimestr, 'InputFormat', 'yyyyMMdd');
+if In.StartTime ~= In.TimeTotal(1)
+    StartTimestr = datestr(In.StartTime, 'yyyymmdd');
+    load([In.RestartDir, '\restart', StartTimestr, '.mat']);
+    In.StartTime = datetime(StartTimestr, 'InputFormat', 'yyyyMMdd');
     YearCircle = yeari;
     DayCircle = i;
+    TimeBefore = Time(i) - days(In.SeriesLength * 2 + 1);
+    TimeAdvance2 = TimeAdvance;
 else
-    TimeYear = [month(TimeTotal); day(TimeTotal)];
-    TimeYear = find(TimeYear(1, :) == str2double(NewYear(1 : 2)) & ...
-        TimeYear(2, :) == str2double(NewYear(4 : 5)));
+    TimeYear = In.TimeTotal - (datetime(['2017-', In.NewYear]) - datetime('2017-01-01'));
+    TimeYear = find(diff(year(TimeYear)) > 0) + 1;
     TimeYear = [1, TimeYear(TimeYear > 1); ...
-        TimeYear(TimeYear > 1) - 1, length(TimeTotal)];
+        TimeYear(TimeYear > 1) - 1, length(In.TimeTotal)];
     YearCircle = 1;
     DayCircle = 1;
-    SeriesLength = SeriesLength - 1;
-    TimeBefore = TimeTotal(1) - days(SeriesLength * 2 + 1); % Where before start read SIC
-    FrequencyThreshold = FrequencyThreshold ./ (SeriesLength + 1);
-    FrequencyThreshold = sort(FrequencyThreshold, 'descend');
-    if (max(SICLat(:)) > -50 && min(SICLat(:)) < -80) || ...
-            (min(SICLat(:)) < 50 && max(SICLat(:)) > 80) && ...
-            abs(max(SICLon(:)) - min(SICLon(:))) > 350 && ...
-            median(SICLon(:)) > 160 && median(SICLon(:)) < 200
-        CircumPolar = true;
-    else
-        CircumPolar = false;
+    In.SeriesLength = In.SeriesLength - 1;
+    TimeBefore = In.TimeTotal(1) - days(In.SeriesLength * 2 + 1); % Where before start read SIC
+    if In.FrequencyThres(1) > 1
+        In.FrequencyThres = In.FrequencyThres ./ (In.SeriesLength + 1);
     end
-    Membership.Data = zeros(size(SICLat, 1), size(SICLat, 2), ...
-        SeriesLength * 2 + 1, 1);
-    Membership.i = [];
-    MoveMeanSIC.Data = zeros(size(SICLat, 1), size(SICLat, 2), ...
-        SeriesLength + 1);
-    MoveMeanSIC.i = [];
+    In.FrequencyThres = sort(In.FrequencyThres, 'descend');
 end
+disp(['[', datestr(now), ']   Done'])
+Membership.Data = zeros(size(In.SICLat, 1), size(In.SICLat, 2), ...
+    In.SeriesLength * 2 + 1, 1, 'single');
+Membership.i = [];
+MoveMeanSIC.Data = zeros(size(In.SICLat, 1), size(In.SICLat, 2), ...
+    In.SeriesLength + 1, 'single');
+MoveMeanSIC.i = [];
 
+%% YearCicle
 for yeari = YearCircle : size(TimeYear, 2)
-    Time = TimeTotal(TimeYear(1, yeari) : TimeYear(2, yeari));
-if StartTime == TimeTotal(1)
+    Time = In.TimeTotal(TimeYear(1, yeari) : TimeYear(2, yeari));
+    OpenWaterYear = zeros(size(In.SICLon));
+if In.StartTime == In.TimeTotal(1)
     % Initial RAM Allocation
+    DayCircle = 1;
     LossSIC = 0;
     LossData = false(length(Time), 1);
     LastOpenWater = cell(2, 1);
-    MatchOpenWaterInt = zeros(size(SICLat, 1), size(SICLat, 2));
-    OpenWaterMergeQuan = 0;
+%     MatchOpenWaterInt = zeros(size(In.SICLat, 1), size(In.SICLat, 2));
+%     OpenWaterMergeQuan = 0;
     OpenWaterMergeIDnum = cell(length(Time), 1);
-    OpenWaterApartQuan = 0;
+%     OpenWaterApartQuan = 0;
     OpenWaterApartIDnum = cell(length(Time), 1);
-    DeathBook = zeros(size(SICLat));
+%     DeathBook = zeros(size(In.SICLat));
     TotalDeathID = [];
     MaxOpenWater = zeros(2, 1);
     MachineIDSeries = [];
@@ -71,29 +162,51 @@ end
 %%
 for i = DayCircle : length(Time)
     %% disp & restart
-    if mod(i - 1, RestartStride) == 0 && i ~= DayCircle
-        disp(['Saving Restart File of ', datestr(Time(i - 1)), '.'])
-        RestartFiles = dir([RestartDir, 'restart*.mat']);
+    if mod(i - 1, In.RestartStride) == 0 && i ~= DayCircle
+        disp(['[', datestr(now), ...
+            ']   Saving Restart File of ', datestr(Time(i - 1)), '...'])
+        RestartFiles = dir([In.RestartDir, 'restart*.mat']);
         RestartFile = ...
-            [RestartDir, 'restart', datestr(Time(i - 1), 'yyyymmdd'), '.mat'];
-        save(RestartFile)
-        disp(['Restart File Path: ', RestartFile])
-        delete([repmat(RestartDir, size(RestartFiles, 1), 1), ...
-            cat(1, RestartFiles.name)])
+            [In.RestartDir, 'restart', datestr(Time(i - 1), 'yyyymmdd'), '.mat'];
+        VarName = who;
+        VarNameNotSave = [];
+        for j = 1 : length(VarName)
+            if isequal(VarName{j}, 'Membership') || ...
+                    isequal(VarName{j}, 'MoveMeanSIC') || ...
+                    isequal(VarName{j}, 'SICCurrent') || ...
+                    isequal(VarName{j}, 'OpenWaterCurrenttemp')
+                VarNameNotSave = [VarNameNotSave; j];
+            end
+        end
+        VarName(VarNameNotSave) = [];
+        save(RestartFile, VarName{:});
+        clear VarName VarNameNotSave
+        disp(['[', datestr(now), ']   Done.', newline, 'Restart File Path: ', RestartFile])
+        for RestartFilei = 1 : length(RestartFiles)
+            if isequal(RestartFiles(RestartFilei).name, 'restartLastTime.mat')
+                continue
+            end
+            delete([In.RestartDir, ...
+                cat(1, RestartFiles(RestartFilei).name)])
+        end
     end
-    disp([num2str(i + TimeYear(1, yeari) - 1), '/', num2str(length(TimeTotal)), ...
+    disp(['[', datestr(now), ']   ', ...
+        num2str(i + TimeYear(1, yeari) - 1), '/', num2str(length(In.TimeTotal)), ...
         '   ', datestr(Time(i))])
     
     %% Prepare Surround Time SIC Series
     % TimeAdvance means compare with the before Time, now, how much we need
     % to calculate
     TimeAdvance = datenum(Time(i)) - datenum(TimeBefore);
+    % TimeAdvance should less than the length of time dim of DataAll
+    if TimeAdvance > size(Membership.Data, 3)
+        TimeAdvance = size(Membership.Data, 3);
+    end
     TimeBefore = Time(i);
     % read needed data and cut open seas
     [Membership, LossSIC] = ReadAndCut(Membership, TimeAdvance, ...
-        Time(i) - days(SeriesLength) : Time(i) + days(SeriesLength), ...
-        LossSIC, SICDir, SICFileName1, SICFileName2, SICVarName, LandMask, ...
-        Lim, CircumPolar, MapRange);
+        Time(i) - days(In.SeriesLength) : Time(i) + days(In.SeriesLength), ...
+        In.TimeGap, LossSIC, In.SICFile, In.Lim, In.MapRange, In.FastIceFlag);
     if LossSIC ~= 0
         LossData(i) = true;
     end
@@ -103,7 +216,7 @@ for i = DayCircle : length(Time)
     LastOpenWater{1} = LastOpenWater{2};
     % calculate the SICFrequency
     [LastOpenWater{2}, MoveMeanSIC] = OpenWaterFrequency...
-        (Membership, SeriesLength, TimeAdvance, FrequencyThreshold, ...
+        (Membership, In.SeriesLength, TimeAdvance, In.FrequencyThres, ...
         MoveMeanSIC);
     
     %% Arrange Adjacent Time Open Water Into Same Order
@@ -113,28 +226,30 @@ for i = DayCircle : length(Time)
             OverlapDye(LastOpenWater{2}, LastOpenWater{1}, 1, MaxOpenWater(1));
     else
         MaxOpenWater(2) = max(LastOpenWater{2}, [], "all");
-    end
-    
-    %% Physical ID to Logical ID
-    if i ~= 1
-        [ReincarnationBooktemp, DeathBook] = Reincarnation( ...
-            IDnumBye, DeathBook, LastOpenWater{2}, LastOpenWater{1});
+        IDnumMatch.Give = unique(LastOpenWater{2});
     end
     
     %% Match Current Open Water To Long-lasting Open Water
-    SICNow = 1 - Membership.Data(:, :, Membership.i == SeriesLength + 1);
-    SICNow = (SICNow + min(MapRange) ./ ...
-        abs(diff(MapRange))) .* abs(diff(MapRange));
-    % here SICNow is in the range of MapRange, NOT [0, 100] or [0, 1]
-    SICCurrent = bwlabel(SICNow < 70);
-    OpenWaterCurrenttemp = OverlapDye(SICCurrent, LastOpenWater{2});
-    LastOpenwaterSparse = sparse(LastOpenWater{2});
-    LastOpenIndex = cell(1, MaxOpenWater(2));
-    for k = 1 : MaxOpenWater(2)
-        LastOpenIndex{1, k} = find(LastOpenwaterSparse == k);
+    if diff(In.MapRange) > 0
+        SICCurrent = 1 - Membership.Data(:, :, Membership.i == In.SeriesLength + 1);
+        SICCurrent = (SICCurrent + min(In.MapRange) ./ ...
+            abs(diff(In.MapRange))) .* abs(diff(In.MapRange));
+        % here SICNow is in the range of MapRange, NOT [0, 100] or [0, 1]
+        SICCurrent = bwlabel(SICCurrent < In.Lim);
+    else
+        SICCurrent = ...
+            bwlabel(Membership.Data(:, :, Membership.i == In.SeriesLength + 1));
     end
-    TotalLastOpen(i, 1 : MaxOpenWater(2)) = LastOpenIndex;
-    OpenWaterCurrent{i} = sparse(OpenWaterCurrenttemp);
+    OpenWaterCurrenttemp = OverlapDye(SICCurrent, LastOpenWater{2});
+    OpenWaterYear = OpenWaterYear + double(OpenWaterCurrenttemp ~= 0);
+    LastOpenwaterSparse = sparse(LastOpenWater{2});
+    OpenWaterCurrenttemp = sparse(OpenWaterCurrenttemp);
+    AllIndexIndex = cell(1, MaxOpenWater(2));
+    for k = 1 : MaxOpenWater(2)
+        AllIndexIndex{1, k} = find(LastOpenwaterSparse == k);
+        OpenWaterCurrent{i, k} = find(OpenWaterCurrenttemp == k);
+    end
+    TotalLastOpen(i, 1 : MaxOpenWater(2)) = AllIndexIndex;
 %     save(StoragePath + datestr(Time(i), 'yyyymmdd') + "OpenWater.mat", 'OpenWater');
     
     %% Detect Merging and Seperating of Open Water
@@ -151,6 +266,10 @@ for i = DayCircle : length(Time)
     end
     
     %% Match Seperating and Reinranation Open Water to Previous Open Water
+    if exist('TimeAdvance2', 'var')
+        TimeAdvance = TimeAdvance2;
+        clear TimeAdvance2
+    end
     if i <= 30
         TotalLastOpenWater.i = [i, TotalLastOpenWater.i];
     else
@@ -160,16 +279,14 @@ for i = DayCircle : length(Time)
     if i == 1
         TotalLastOpenWater.Data(:, :, i) = LastOpenWater{2};
     else
-%         TotalLastOpenWater = TotalLastOpenWater(:, :, 2 : end);
-%         TotalLastOpenWater = cat(3, TotalLastOpenWater, LastOpenWater{2});
         for j = TimeAdvance : -1 : 1
             TotalLastOpenWater.Data(:, :, TotalLastOpenWater.i == j) = ...
                 LastOpenWater{2};
         end
     end
     if i ~= 1
-        [MapStateApart,ReinState] = ...
-            DetectMatchState(TotalLastOpenWater,ApartIDnum,ReincarnationBooktemp);
+        [MapStateApart] = ... ,ReinState
+            DetectMatchState(TotalLastOpenWater,ApartIDnum); % ,ReincarnationBooktemp
     end
     
     %% Process the Open Water Series along the Time
@@ -179,8 +296,7 @@ for i = DayCircle : length(Time)
         MachineIDSeries(i, :) = MachineIDSeries(i - 1, :); % Copy the ID of the last day
         [MachineIDSeries, TotalDeathID, TotalAppend] = ...
             ProcessSeries(MachineIDSeries, MergeIDnum, ApartIDnum, ...
-            MapStateApart, MaxOpenWater, nonzeros(DeathBook), TotalDeathID, ...
-            ReincarnationBooktemp, ReinState);
+            MapStateApart, MaxOpenWater, IDnumBye.Death, TotalDeathID);
         % TotalAppend contain the information of append column, first row
         % is the column copy from, the second row is the column copy to
     end
@@ -194,77 +310,157 @@ for i = DayCircle : length(Time)
     MachineIDList(SkipNum) = [];
     MachineIDList = unique(MachineIDList)';
     MachineIDList(isnan(MachineIDList)) = [];
-    if HeatLossFlag
-        MaxHeatFlux = HeatLoss(LastOpenWater{2}, ...
-            MachineIDList, SICLon, SICLat, Time(i));
+    if In.TempeJudgeFlag
+        MeanTempeDiff = TemperatureDiff(LastOpenWater{2}, ...
+            MachineIDList, In.SICLon, In.SICLat, Time(i));
         if i == 1
-            HeatFluxMat = HeatLossSeries...
-                (i, MaxHeatFlux, MachineIDSeries(end, :), MachineIDList,...
-                LastOpenWater{2}, SICLon, SICLat, Time);
+            TempeDiffMat = TemperatureDiffSeries...
+                (i, MeanTempeDiff, MachineIDSeries(end, :), MachineIDList);
         else
-            HeatFluxMat = HeatLossSeries...
-                (i, MaxHeatFlux, MachineIDSeries(end, :), MachineIDList,...
-                HeatFluxMat, TotalAppend);
+            TempeDiffMat = TemperatureDiffSeries...
+                (i, MeanTempeDiff, MachineIDSeries(end, :), MachineIDList,...
+                TempeDiffMat, TotalAppend);
         end
     end
-    
-    %% Output Open Water Properties
-    %Open Water Area
-%     Area = cell2mat(struct2cell(regionprops(MatchOpenWater{2}, 'Area')));
-%     OpenWaterArea(i, 1 : length(Area)) = Area;
-%     Open Water Centroid
-%     OpenWaterCentroid = cell2mat(struct2cell(regionprops(MatchOpenWater{2}, 'Centroid')));
-%     y = round(OpenWaterCentroid(2:2:end));
-%     x = round(OpenWaterCentroid(1:2:end));
-%     OpenWaterNum = unique(MatchOpenWater{2});
-%     CenLon = zeros(1,length(y));
-%     CenLat = zeros(1,length(y));
-%     OpenWaterNum = OpenWaterNum(2 : end);
-%     for k = 1 : length(OpenWaterNum)
-%         CenLon(OpenWaterNum(k)) = SICLon(y(OpenWaterNum(k)), x(OpenWaterNum(k)));
-%         CenLat(OpenWaterNum(k)) = SICLat(y(OpenWaterNum(k)), x(OpenWaterNum(k)));
-%     end
-%     OpenWaterCenLon(i, 1 : length(y)) = CenLon;
-%     OpenWaterCenLat(i, 1 : length(y)) = CenLat;
-%     clear CenLon CenLat x y;
-%     %% Plot The Matched Open Water
-%     figure(i);
-%     m_proj('azimuthal equal-area','latitude',-90,'radius',50,'rectbox','on');
-%     m_grid('box','on','xaxislocation','top','xtick',[-180:30:180],...
-%         'yticklabels',[ ; ],'ytick',[-80 -70 -60],'linewi',1,'tickdir',...
-%         'out','FontSize',8,'FontName','times new roman');
-%     m_coast('color','k');%内部没有填充，只有海岸线轮廓
-%     hold on
-%     
-%     MatchOpenWaterInt = MatchOpenWater;
-%     MatchOpenWaterInt(MatchOpenWaterInt == 0) = nan;
-%     h = m_pcolor(SICLon,SICLat,MatchOpenWaterInt);
-%     set(h, 'LineStyle', 'None')
-%     m_contour(SICLon,SICLat,LastOpenWater(:, :, 2),[1 1],'LineWidth',0.3);
-%     hold off
-% 
-%     print(i,".\compare\test1\"+datestr(Time(i), 'yyyymmdd')+"_test1_20",'-dpng','-r1000');
-%     close(i);
 end
 
-if HeatLossFlag
-    WarmSeasonMat = isWarmSeason(Time(end), ...
-        LastOpenWater{2}, MachineIDList, SICLon, SICLat, ...
-        length(Time), MachineIDSeries(end, :), HeatFluxMat);
+disp(['[', datestr(now), ...
+    ']   Doing seasonal judgment and linking Machine ID to Manual ID in ', ...
+    num2str(year(In.TimeTotal(TimeYear(2, yeari)))), '...'])
+
+% if In.HeatLossFlag
+%     WarmSeasonMat = isWarmSeason(MachineIDSeries(end, :), HeatFluxMat);
+% else
+%     WarmSeasonMat = month(Time) <= 3 | month(Time) >= 11;
+%     WarmSeasonMat = repmat(WarmSeasonMat, size(MachineIDSeries, 2), 1);
+% end
+% MachineIDSeries2 = MachineIDSeries;
+% MachineIDSeries2(WarmSeasonMat') = NaN;
+
+if In.TempeJudgeFlag
+    GreatTempeDiffMat = isGreatTempeDiff(MachineIDSeries(end, :), TempeDiffMat);
+    MachineIDSeries(:, ~GreatTempeDiffMat) = NaN;
 else
-    WarmSeasonMat = month(Time) <= 3 | month(Time) >= 11;
-    WarmSeasonMat = repmat(WarmSeasonMat, size(MachineIDSeries, 2), 1);
+    GreatTempeDiffMat = false(1, size(MachineIDSeries, 2));
+    disp('DO NOT judge whether the difference between the air and ocean temperature.')
 end
+
 MachineIDSeries(LossData, :) = NaN;
-MachineIDSeries2 = MachineIDSeries;
-MachineIDSeries2(WarmSeasonMat') = NaN;
+MachineIDSeries(MachineIDSeries == 0) = NaN;
+isOpenWaterCurrent{yeari} = ~cellfun(@isempty, OpenWaterCurrent);
+[AllIndex, LogIncludePhy, isOpenWaterCurrent{yeari}] = ...
+    PhysicalToLogical(MachineIDSeries, TotalLastOpen, isOpenWaterCurrent{yeari},...
+    In.SICLon, In.RebirthOverlapThres, In.SeriesLengthThres, ...
+    In.TimeFilterAfter, In.CombineMergeThres, In.MinPolynyaArea);
 
-[AllIndex, LogIncludePhy] = ...
-    PhysicalToLogical(MachineIDSeries2, TotalLastOpen, OpenWaterCurrent, Time);
-
-StartTime = TimeTotal(1);
+if yeari ~= 1
+    [MachineIDSeriesYear, TotalLastOpenYear, MaxOpenWaterYear, TotalLastOpenWaterYear, ...
+        IDYeartoCrossYear, isOpenWaterCurrent{yeari}] = ...
+        CrossYearSeries(MaxOpenWaterYear, AllIndex, TotalLastOpenYear,...
+        TotalLastOpenWaterYear, MachineIDSeriesYear, isOpenWaterCurrent{yeari}, ...
+        In.CrossYearOverlapThres);
+else
+    TotalLastOpenWaterYear.i = 1;
+    TotalLastOpenWaterYear.Data = AllIndex;
+    MachineIDSeriesYear = unique(AllIndex)';
+    MaxOpenWaterYear(2) = max(MachineIDSeriesYear);
+    AllIndexSparse = sparse(AllIndex);
+    AllIndexIndex = cell(1, MaxOpenWaterYear(2));
+    for k = 1 : MaxOpenWaterYear(2)
+        AllIndexIndex{1, k} = find(AllIndexSparse == k);
+    end
+    TotalLastOpenYear(1, 1 : MaxOpenWaterYear(2)) = AllIndexIndex;
+    IDYeartoCrossYear.Give = unique(AllIndexSparse);
+    IDYeartoCrossYear.Give = full(IDYeartoCrossYear.Give);
+    IDYeartoCrossYear.Give = IDYeartoCrossYear.Give(2 : end);
+    IDYeartoCrossYear.Get = unique(AllIndexSparse);
+    IDYeartoCrossYear.Get = full(IDYeartoCrossYear.Get);
+    IDYeartoCrossYear.Get = IDYeartoCrossYear.Get(2 : end);
+    for i = 1 : size(IDYeartoCrossYear.Give, 1)
+        isOpenWaterCurrent_temp(IDYeartoCrossYear.Get(i), :) = ...
+            isOpenWaterCurrent{yeari}(IDYeartoCrossYear.Give(i), :);
+    end
+    isOpenWaterCurrent{yeari} = isOpenWaterCurrent_temp;
+    clear isOpenWaterCurrent_temp
 end
-% save test15_Centroid OpenWaterCenLon OpenWaterCenLat;
-% save test15_Area OpenWaterArea;
-% save test15_MA OpenWaterMergeIDnum OpenWaterApartIDnum;
-% save test15_Final Result
+
+if str2double(datestr(In.TimeTotal(TimeYear(2, yeari)), 'mmdd')) <= ...
+        str2double(In.NewYear([1 : 2, 4 : 5]))
+    save([In.Cache, '\AAPSCacheforYear', ...
+        num2str(year(In.TimeTotal(TimeYear(2, yeari)))-1), '.mat'], ...
+        'LogIncludePhy', 'OpenWaterCurrent', 'IDYeartoCrossYear', ...
+        'GreatTempeDiffMat');
+else
+    save([In.Cache, '\AAPSCacheforYear', ...
+        num2str(year(In.TimeTotal(TimeYear(2, yeari)))), '.mat'], ...
+        'LogIncludePhy', 'OpenWaterCurrent', 'IDYeartoCrossYear', ...
+        'GreatTempeDiffMat');
+end
+
+clearvars -except CircumPolar DayCircle In LastOpenWater Membership MoveMeanSIC ...
+    OpenWaterCurrent path TimeBefore TimeYear YearCircle yeari ...
+    MachineIDSeriesYear MaxOpenWaterYear TotalLastOpenYear ...
+    TotalLastOpenWaterYear isOpenWaterCurrent DiaryFlag
+
+VarName = who;
+save(['C:\Users\13098\Documents\冰间湖识别\Data\tempData', ...
+    num2str(yeari + 2003), '.mat'], VarName{:});
+
+In.StartTime = In.TimeTotal(1);
+disp(['[', datestr(now), ']   Done']);
+end
+
+%% Last Restart
+disp(['[', datestr(now), ...
+    ']   Saving Restart File of LastTime...'])
+RestartFile = ...
+    [In.RestartDir, 'restartLastTime.mat'];
+VarName = who;
+save(RestartFile, VarName{:});
+clear VarName
+disp(['[', datestr(now), ']   Done.', newline, 'Restart File Path: ', RestartFile])
+
+%% CrossYear
+disp(['[', datestr(now), ']   Doing cross year tracking...'])
+[IDSeriesYear, AllIndexYear] = CrossYearSeriesCombine...
+    (MachineIDSeriesYear, TotalLastOpenYear, isOpenWaterCurrent, ...
+    In.SICLon, In.RebirthOverlapThresYear, In.SeriesLengthThresYear, ...
+    In.CombineMergeThres, In.SICFile.LandMask, In.Resolution, In.TimeFilterAfter);
+disp(['[', datestr(now), ']   Done'])
+
+% disp(['[', datestr(now), ']   Getting years of polynyas'])
+% PolynyasYear = GetPolynyasYear(IDSeriesYear);
+% disp(['[', datestr(now), ']   Done'])
+
+disp(['[', datestr(now), ']   Detecting coastal polynyas'])
+CoastalPolynyas = DetectCoastalPolynyas(AllIndexYear, ...
+    In.SICFile.LandMask, In.Resolution);
+disp(['[', datestr(now), ']   Done'])
+
+%% Save & last check
+disp(['[', datestr(now), ']   Saving results...'])
+[PolynyaLoc, IDs] = ...
+    SaveResults(TimeYear, In, IDSeriesYear, AllIndexYear, CoastalPolynyas);
+disp(['[', datestr(now), ']   Done'])
+
+disp(['[', datestr(now), ']   Saving a overview map...'])
+OverviewOverlap = SaveOverviewMap(IDs, PolynyaLoc, ...
+    In.SICFile.LandMask, In.SeriesLengthThresYear, In.RebirthOverlapThresYear, ...
+    In.Save);
+disp(['[', datestr(now), ']   Done'])
+
+disp(['[', datestr(now), ']   Adding the other open waters...'])
+SaveOpenWater(In.SICFile, In.TimeGap, In.Save, In.Lim, In.FastIceFlag, ...
+    OverviewOverlap)
+disp(['[', datestr(now), ']   Done'])
+
+disp([newline, 'Output files'' path: ', In.Save.Path, '\'])
+fprintf('\n<strong>** ALL DONE **</strong>\n')
+load chirp
+sound(y,Fs)
+diary off
+if DiaryFlag
+    fprintf(['Diary path: ', ...
+        fileparts(which(NameList_Name)), '\Diary_', NameList_Name, '\n'])
+end
+end

@@ -1,7 +1,7 @@
-function [MapState, ReinState] = DetectMatchState(TotalLastOpenWater, Apart, ReinBook)
+function [MapState] = DetectMatchState(TotalLastOpenWater, Apart) % , ReinState = , ReinBook
 global IDCpacity
 ApartID = [];
-ReinBookID = [];
+% ReinBookID = [];
 if ~isempty(Apart)
     for i = 1 : length(Apart)
         ApartID = [ApartID; Apart(i).after]; % Get apart after open water ID
@@ -10,19 +10,19 @@ if ~isempty(Apart)
 else
     MapState = [];
 end
-if isfield(ReinBook, 'Get')
-    if ~isempty(ReinBook.Get)
-        ReinBookID = unique(ReinBook.Get); % Get reincarnation open water ID
-        ReinState = cell(length(ReinBookID), 2);
-    else
-        ReinState = [];
-    end
-else
-    ReinBook.Get = [];
-    ReinState = [];
-end
-if ~isempty(Apart) || ~isempty(ReinBook.Get)
-    TotalID = [ApartID; ReinBookID];
+% if isfield(ReinBook, 'Get')
+%     if ~isempty(ReinBook.Get)
+%         ReinBookID = unique(ReinBook.Get); % Get reincarnation open water ID
+%         ReinState = cell(length(ReinBookID), 2);
+%     else
+%         ReinState = [];
+%     end
+% else
+%     ReinBook.Get = [];
+%     ReinState = [];
+% end
+if ~isempty(Apart) % || ~isempty(ReinBook.Get)
+    TotalID = [ApartID]; % ; ReinBookID
     NowOpenWater = TotalLastOpenWater.Data(:, :, TotalLastOpenWater.i == 1);
     AllOpenWater = zeros(size(NowOpenWater)); % AllOpenWater only includes the ID of 
                                               % apart and reincarnation open water ID
@@ -64,17 +64,17 @@ if ~isempty(Apart) || ~isempty(ReinBook.Get)
             % open water
         end
     end
-    if ~isempty(ReinBook)
-        for i = 1 : length(ReinBookID)
-            ReinState(i, 1) = {ReinBookID(i)};
-            if isempty(TotalMaxLastID)
-                ReinState(i, 2) = {[]};
-            else
-                ReinState(i, 2) = {unique(TotalMaxLastID(TotalMaxLastID(:, 1) == ReinBookID(i), 2))};
-                % Get the series of all mapping open water ID of each
-                % reincranation open water
-            end
-        end
-    end
+%     if ~isempty(ReinBook)
+%         for i = 1 : length(ReinBookID)
+%             ReinState(i, 1) = {ReinBookID(i)};
+%             if isempty(TotalMaxLastID)
+%                 ReinState(i, 2) = {[]};
+%             else
+%                 ReinState(i, 2) = {unique(TotalMaxLastID(TotalMaxLastID(:, 1) == ReinBookID(i), 2))};
+%                 % Get the series of all mapping open water ID of each
+%                 % reincranation open water
+%             end
+%         end
+%     end
 end
 end

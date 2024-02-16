@@ -1,50 +1,91 @@
-function [Time, StartTime, NewYear,...
-    SICDir, SICFileName1, SICFileName2, SICVarName, SICLon, SICLat, LandMask, ...
-    Lim, ...
-    SeriesLength, FrequencyThreshold, MapRange, ...
-    HeatLossFlag, ...
-    RestartDir, RestartStride]...
-    = NameList
-% Name list of main
+function In = NameList
+% Name list of main function
 % you can run the function by FindPolyunyaMain.m
+% Var Name
+%  TIME
+%   TimeTotal                   total time needs to detect polynyas
+%   StartTime                   time start to detect polynyas, default is
+%                               the fisrt of TimeTotal NewYear
+%  READ SIC FILES
+%   SICFile                     a struct storing the information of SIC
+%   |                           files need to be read
+%   |-SICFile.Dir               the path of the folder storing SIC files
+%   |-SICFile.Name1             name of SIC files before the timestamp
+%   |-SICFile.Name2             name of SIC files after the timestamp
+%   |-SICFile.LandMask          land mask for SIC files
+%   SICLon                      longitude for SIC
+%   SICLat                      latitude for SIC
+%  DETECT OPEN SEA & ICE
+%   Lim                         the threshold for the openwater/ice
+%  LASTING OPEN WATER
+%   SeriesLength                the length of time series to detect lasting
+%                               openwater
+%   FrequencyThreshold          the threshold for detecting lasting
+%                               openwater
+%   MapRange                    remapping to get membership of openwater
+%  WARM SEASON
+%   HeatLossFlag                is the HeatLoss Mode for judging warm
+%                               season on
+%  RESTART
+%   RestartDir                  path of the folder to store restart files
+%   RestartStride               the stride to store a restart file
 
+%%
+clear all; 
 %% Time
-Time = ... The time you want to identify polynyas
-    datetime('2016-09-15') : datetime('2017-03-01');
-StartTime = Time(1);
-NewYear = '02-01';
+In.TimeTotal = ... The time you want to identify polynyas
+    [datetime('2004-02-01') : datetime('2011-08-31'), ...
+    datetime('2012-08-01') : datetime('2023-01-31')];
+% In.TimeTotal = ... The time you want to identify polynyas
+%     datetime('2017-02-01') : datetime('2018-01-31');
+TimeTotalmmdd = str2double(string(datestr(In.TimeTotal, 'mmdd')));
+In.TimeTotal = In.TimeTotal(TimeTotalmmdd >= 0401 & TimeTotalmmdd <= 1031);
+% In.TimeTotal = [In.TimeTotal(1 : 2813), datetime('2017-11-01') : datetime('2017-11-15'), In.TimeTotal(2814 : end)];
+%     datetime('2014-02-01') : datetime('2015-01-31');
+
+In.TimeGap = datetime('2012-07-01');
+In.StartTime = In.TimeTotal(1);
+In.NewYear = '02-01';
 
 %% Read Data
 % we will read data as [SICDir \ SICFileName1 Timestr SICFileName2]
-SICDir = ...
-    'C:\Users\13098\Documents\Data\Antaratica_ASI_SIC(02-11_12-20)';
-SICFileName1 = ...
-    'asi-AMSR2-s3125-';
-SICFileName2 = ...
-    '-v5.4.hdf';
-SICVarName = ...
+In.SICFile.Dir = ...
+    'G:\Antaratica_ASI_SIC_6250';
+In.SICFile.Name1 = ...%     {'asi-AMSR2-s3125-'};
+    {'asi-s6250-', 'asi-AMSR2-s6250-'};
+In.SICFile.Name2 = ...%     {'-v5.4.hdf'};
+    {'-v5.4.hdf', '-v5.4.hdf'};
+In.SICFile.VarName = ...
     'ASI Ice Concentration';
 % read the Lon & Lat
-SICLon = hdfread(...
-    [SICDir, '\LongitudeLatitudeGrid-s3125-Antarctic3125.hdf'], 'Longitudes');
-SICLat = hdfread(...
-    [SICDir, '\LongitudeLatitudeGrid-s3125-Antarctic3125.hdf'], 'Latitudes');
+In.SICLon = hdfread(...
+    [In.SICFile.Dir, '\LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Longitudes');
+In.SICLat = hdfread(...
+    [In.SICFile.Dir, '\LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Latitudes');
+% In.SICLon = load('G:\Antaratica_ASI_SIC_6250\LonLat_25000.mat');
+% In.SICLat = In.SICLon.Lat;
+% In.SICLon = In.SICLon.Lon;
 % read land mask
-LandMask = ncread([SICDir, '\LandMaskAMSR3125.nc'], 'LandMask');
+In.SICFile.LandMask = ncread([In.SICFile.Dir, '\LandMaskAMSR6250.nc'], 'LandMask');
+% set the resolution
+In.Resolution = 6.25;
 
-%% Cut Open Sea
-Lim = ... The threshold for the openwater/ice
-    70;
+%% Land Fast Ice
+In.FastIceFlag = FastIceParameter;
 
-%% Open Water Last
-SeriesLength = ... The length of identify time series
-    20;
+%% Detect Opensea & Ice
+In.Lim = ... The threshold for the openwater/ice
+    60;
+
+%% Lasting Open Water
+In.SeriesLength = ... The length of identify time series
+    14;
 % the FrequencyThreshold is calculated as FrequencyThreshold ./ SeriesLength
-FrequencyThreshold = ... the threshold for frequent openwater. it is a 1*2 vector
-    [14, 10];
+In.FrequencyThres = ... the threshold for frequent openwater. it is a 1*2 vector
+    [0.7, 0.5];
 
-MapRange = ... Remapping for membership of openwater
-    [50, 85];
+In.MapRange = ... Remapping for membership of openwater
+    [60, 60];
 
 %% Match
 global IDCpacity
@@ -55,12 +96,47 @@ IDCpacity = ... It is a constant for OverlapDye.m. If it
 global ReincarnationTol
 ReincarnationTol = ... The tolerance for the Reincarnation
     4;
+In.CombineMergeThres = 0.5;
+In.MinPolynyaArea = 3;
+
+%% Rebirth
+In.RebirthOverlapThres = ...
+    0.2;
+In.RebirthOverlapThresYear = ...
+    0.4;
+In.TimeFilterAfter = ...
+    20;
 
 %% Warm Season
-HeatLossFlag = HeatLossParms;
+% In.HeatLossFlag = HeatLossParms;
 
-%% BreakPoint
-RestartDir = 'C:\Users\13098\Documents\冰间湖识别\Scrip';
-RestartStride = 60;
+%% Air Temperature Judge
+In.TempeJudgeFlag = AirTemperatureParameter;
+
+%% Cross Year Track
+In.CrossYearOverlapThres = ...
+    0.2;
+In.SeriesLengthThres = ...
+    0.3;
+In.SeriesLengthThresYear = ...
+    0.2;
+
+%% Restart
+In.RestartDir = ...
+    'C:\Users\13098\Documents\冰间湖识别\Data\tempData';
+In.RestartStride = ...
+    120;
+
+%% CacheFile
+In.Cache = ...
+    'C:\Users\13098\Documents\冰间湖识别\Data\tempData';
+
+%% SaveResults
+In.Save.Path = ...
+    'G:\AAPSResults\AMSR_SIC60_6.25km_20d';
+In.Save.FileName1 = ...
+    'AAPS_s3125_AMSR_SIC_';
+In.Save.FileName2 = ...
+    '_v0.4.nc';
+
 end
-% run the function by FindPolyunyaMain.m

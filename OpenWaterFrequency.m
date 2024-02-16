@@ -33,8 +33,8 @@ else
 end
 % calculate
 for j = TimeAdvance : -1 : 1
-    MeanRange = SIC.i <= length(SIC.i) - j + 1 & ...
-        SIC.i >= length(SIC.i) - j - SeriesLength + 1;
+    MeanRange = SIC.i >= j & ...
+        SIC.i <= j + SeriesLength;
      temp = mean(SIC.Data(:, :, MeanRange), 3);
      MoveMeanSIC.Data(:, :, j == MoveMeanSIC.i) = temp;
 end
@@ -44,7 +44,7 @@ SICFrequency = max(MoveMeanSIC.Data, [], 3);
 %% get frequent open water by core/pan threshold
 % get core/pan threshold
 FrequencyThresholdCore = FrequencyThreshold(1);
-FrequencyThresholdPan = FrequencyThreshold(2);
+% FrequencyThresholdPan = FrequencyThreshold(2);
 
 % use two threshold to get smaller but with less fake signal area (by core
 % threshold) and larger but including more fake signal area (by pan
@@ -52,14 +52,14 @@ FrequencyThresholdPan = FrequencyThreshold(2);
 SICFrequencyCore = SICFrequency;
 SICFrequencyCore(SICFrequencyCore < FrequencyThresholdCore) = 0;
 %
-SICFrequencyPan = SICFrequency;
-SICFrequencyPan(SICFrequencyPan < FrequencyThresholdPan) = 0;
+% SICFrequencyPan = SICFrequency;
+% SICFrequencyPan(SICFrequencyPan < FrequencyThresholdPan) = 0;
 
 % do OverlapDye to select all region identified by pan threshold that have
 % core area
 SICFrequencyCore = bwlabel(SICFrequencyCore);
-SICFrequencyPan = bwlabel(SICFrequencyPan);
-SICFrequencyID = OverlapDye(SICFrequencyPan, SICFrequencyCore);
+% SICFrequencyPan = bwlabel(SICFrequencyPan);
+SICFrequencyID = SICFrequencyCore;
 end
 
 %% subfunction

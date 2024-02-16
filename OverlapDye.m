@@ -1,5 +1,5 @@
 function [IDget, IDnumMatch, MaxID, IDnumBye] = ...
-    OverlapDye(IDget, IDgive, KeepNewNum, MaxID)
+    OverlapDye(IDget, IDgive, KeepNewNum, MaxID, varargin)
 % this function is used to find the overlap between SIC1 and SIC2, and dye
 % IDgive ID to the IDget ID, which is overlaped.
 %
@@ -62,6 +62,27 @@ IDnumMatchGet = floor(IDnumMatch / IDCpacity); % IDnumMarchGet means only
 IDnumMatchGive = mod(IDnumMatch, IDCpacity);
 IDnumTotalGet = floor(IDnumTotal / IDCpacity); % IDnumTotalGet means IDGet 
                                                % in IDnumTotal
+                                               
+% if ~isempty(varargin) && isequal(varargin{1}, 'OverlapThreshold')
+%     IDMatchCount = accumarray(ic,1);
+%     IDMatchCount = IDMatchCount(~IDnumByeLogicla);
+%     [IDTotalGetunique, ~, icIDTotalGet] = unique(IDTotalGet);
+%     IDGetCount = accumarray(icIDTotalGet,1);
+%     IDGetCount = IDGetCount(IDTotalGetunique);
+%     [IDTotalGiveunique, ~, icIDTotalGive] = unique(IDTotalGive);
+%     IDGiveCount = accumarray(icIDTotalGive,1);
+%     IDGiveCount = IDGiveCount(IDTotalGiveunique);
+%     IDMatchDel = [];
+%     for i = 1 : length(IDnumMatch)
+%         if IDMatchCount(i) < IDGetCount(IDnumMatchGet(i)) * varargin{2} && ...
+%                 IDMatchCount(i) < IDGiveCount(IDnumMatchGive(i)) * varargin{2}
+%             IDMatchDel = [IDMatchDel, i];
+%         end
+%     end
+%     IDnumMatch(IDMatchDel) = [];
+%     IDnumMatchGet(IDMatchDel) = [];
+%     IDnumMatchGive(IDMatchDel) = [];
+% end
 
 if max(IDnumMatchGive) >= IDCpacity - 100
     error('Too small IDCpacity')
@@ -85,9 +106,11 @@ if KeepNewNum
         ApartMatchGet = IDnumMatchGet(IDnumMatchGive == GiveID(i));
         if length(ApartMatchGet) >= 2
             for k = 1 : length(ApartMatchGet)
+                ApartLocation = find(IDnumTotalGet == ApartMatchGet(k) & IDnum0 == 0);
+                if ~isempty(ApartLocation)
                 MaxID = MaxID + 1;
-                IDnum0(IDnumTotalGet == ApartMatchGet(k) & IDnum0 == 0)...
-                    = MaxID;
+                IDnum0(ApartLocation) = MaxID;
+                end
             end
         end
     end
@@ -96,9 +119,11 @@ if KeepNewNum
     GetID = unique(IDnumMatchGet);
     for i = 1 : length(GetID)
         if length(find(IDnumMatchGet == GetID(i))) >= 2
-            MaxID = MaxID + 1;
-            IDnum0(IDnumTotalGet == GetID(i) & IDnum0 == 0)...
-                 = MaxID;
+            MergeLocation = find(IDnumTotalGet == GetID(i) & IDnum0 == 0);
+            if ~isempty(MergeLocation)
+                MaxID = MaxID + 1;
+                IDnum0(MergeLocation) = MaxID;
+            end
         end
     end
 end
@@ -120,13 +145,20 @@ IDget2 = reshape(IDget2, size(IDgive));
 % if KeepNewNum is on (1), the new open water will get a new ID; if not,
 % the region appear in IDget but not in IDgive will be ignored
 if KeepNewNum
-    IDget = IDget & ~IDget2;
-    IDget = bwlabel(IDget);
-    % MaxID is the maximal ID we have used. The new ID of new open water
-    % should be larger than it to make sure that the new ID is not used,
-    % and one ID represent one open water.
-    IDget(IDget > 0) = IDget(IDget > 0) + MaxID;
-    IDget = IDget + IDget2;
+    if isempty(varargin)
+        IDget = IDget & ~IDget2;
+        IDget = bwlabel(IDget);
+        % MaxID is the maximal ID we have used. The new ID of new open water
+        % should be larger than it to make sure that the new ID is not used,
+        % and one ID represent one open water.
+        IDget(IDget > 0) = IDget(IDget > 0) + MaxID;
+        IDget = IDget + IDget2;
+    elseif isequal(varargin{1}, 'NotConnect')
+        IDget(IDget2 ~= 0) = 0;
+        [IDget, ~, ic] = unique(IDget);
+        IDget = [0, (1 : (length(IDget) - 1)) + MaxID];
+        IDget = reshape(IDget(ic), size(IDget2)) + IDget2;
+    end
     MaxIDnew = max(MaxID, max(IDget(:))); % refresh the MaxID
     if nargout == 4
         IDnumBye.Birth = ((MaxID + 1) : MaxIDnew)';

@@ -3,7 +3,9 @@
 % to connect all the physical ID into a series along the time, to show how 
 % the ID of a open water change
 function [Result, TotalDeathID, TotalAppend] = ProcessSeries(Result, Merge, Apart, MapStateApart, ...
-    MaxOpenWater, Death, TotalDeathID, ReincarnationBook, ReinState)
+    MaxOpenWater, Death, TotalDeathID)
+% function [Result, TotalDeathID, TotalAppend] = ProcessSeries(Result, Merge, Apart, MapStateApart, ...
+%     MaxOpenWater, Death, TotalDeathID, ReincarnationBook, ReinState)
 TotalAppendFrom = [];
 TotalAppendTo = [];
 %% Merge State
@@ -38,10 +40,10 @@ end
 % If a open water die in the last step, open water ID in this step will be
 % changed into nan, and its index will be record in the total death ID
 if ~isempty(Death)
-    DeathID = intersect(Result(end - 1, :), Death);
-    for k = 1 : length(DeathID)
-        DeathIndex = find(Result(end - 1, :) == DeathID(k));
-        TotalDeathID = [TotalDeathID; repmat(DeathID(k), ...
+%     Death = intersect(Result(end - 1, :), Death);
+    for k = 1 : length(Death)
+        DeathIndex = find(Result(end - 1, :) == Death(k));
+        TotalDeathID = [TotalDeathID; repmat(Death(k), ...
             length(DeathIndex), 1) DeathIndex'];
         % Total DeathID: first line is the death ID, the second
         % line is the index in the result of the death open water
@@ -49,25 +51,25 @@ if ~isempty(Death)
     Result(end, ismember(Result(end - 1, :), Death)) = nan;
 end
 %% Reincarnation State
-% Match the reincarnation open water to the best fit series
-if isfield(ReincarnationBook, 'Get')
-    if ~isempty(ReincarnationBook.Get)
-        ReinGiveID = ReincarnationBook.Give;
-        ReinGiveNum = unique(ReinGiveID);
-        ReinGetID = ReincarnationBook.Get;
-        ReinLastID = ReinState;
-        for k = 1 : length(ReinGiveNum)
-            ReinGetNum = ReinGetID(ReinGiveID == ReinGiveNum(k));
-            ReinCol = TotalDeathID(TotalDeathID(:, 1) == ReinGiveNum(k), 2);
-            [ReinOrig, ReinAddi, AppendFrom] = ...% Match the reincarnation open water to the best fit series
-                ReinMatch(Result(1 : end - 1, ReinCol), ReinGetNum, ReinLastID);
-            TotalAppendFrom = [TotalAppendFrom ReinCol(AppendFrom)'];
-            TotalAppendTo = [TotalAppendTo size(Result, 2) + 1 : size(Result, 2) + size(ReinAddi, 2)];
-            Result(:, ReinCol) = ReinOrig;
-            Result = [Result ReinAddi];
-        end
-    end
-end
+% % Match the reincarnation open water to the best fit series
+% if isfield(ReincarnationBook, 'Get')
+%     if ~isempty(ReincarnationBook.Get)
+%         ReinGiveID = ReincarnationBook.Give;
+%         ReinGiveNum = unique(ReinGiveID);
+%         ReinGetID = ReincarnationBook.Get;
+%         ReinLastID = ReinState;
+%         for k = 1 : length(ReinGiveNum)
+%             ReinGetNum = ReinGetID(ReinGiveID == ReinGiveNum(k));
+%             ReinCol = TotalDeathID(TotalDeathID(:, 1) == ReinGiveNum(k), 2);
+%             [ReinOrig, ReinAddi, AppendFrom] = ...% Match the reincarnation open water to the best fit series
+%                 ReinMatch(Result(1 : end - 1, ReinCol), ReinGetNum, ReinLastID);
+%             TotalAppendFrom = [TotalAppendFrom ReinCol(AppendFrom)];
+%             TotalAppendTo = [TotalAppendTo size(Result, 2) + 1 : size(Result, 2) + size(ReinAddi, 2)];
+%             Result(:, ReinCol) = ReinOrig;
+%             Result = [Result ReinAddi];
+%         end
+%     end
+% end
 %% New Born State
 % If a ID is not formed by seperating, merging, reincranation, it will be
 % considered as a new born open water append to the Result
