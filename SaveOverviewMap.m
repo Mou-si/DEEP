@@ -4,13 +4,16 @@ PolynyaLoc_robust = cell(length(IDs), 1);
 PolynyaLocCount = cell(length(IDs), 1);
 
 for i = 1 : length(IDs)
+    In_SeriesLengthThresYear_temp = In_SeriesLengthThresYear;
     if IDs(i) == 0
         continue
+    elseif mod(IDs(i), 2) == 1
+        In_SeriesLengthThresYear_temp = In_SeriesLengthThresYear / 2;
     end
     [PolynyaLoc_robust{i}, ~, PolynyaLocic] = unique(PolynyaLoc{i, 1});
     PolynyaLocCount{i} = accumarray(PolynyaLocic, 1);
     PolynyaLoc_robust{i} = PolynyaLoc_robust{i}...
-        (PolynyaLocCount{i} > length(PolynyaLoc{i, 2}) .* In_SeriesLengthThresYear);
+        (PolynyaLocCount{i} > length(PolynyaLoc{i, 2}) .* In_SeriesLengthThresYear_temp);
 end
 
 IDs2 = mat2cell(IDs, ones(size(IDs)));
