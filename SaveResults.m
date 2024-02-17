@@ -55,7 +55,7 @@ for yeari = 1 : size(TimeYear, 2)
                         else
                             IDseries(i) = IDseriestemp .* 10;
                         end
-                        if ~CoastalPolynyas
+                        if ~ismember(i, CoastalPolynyas)
                             IDseries(i) = IDseries(i) + 1;
                         end
                         AllIndexYear(AllIndexYear == i) = IDseries(i);
