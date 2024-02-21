@@ -52,8 +52,9 @@ function FindPolynyaMain(NameList_Name, varargin)
 % 
 % Onput
 %   This function will output 1) a dataset of daily edge of each polynya
-%   in Antarctica (DEEP-AA dataset); 2) a txt file recorded the parameters
-%   input called 'Input.txt'.
+%   in Antarctica (DEEP-AA dataset); 2) a .txt file recorded the parameters
+%   input called 'Input.txt'; 3) a .mat file of the overview map of the
+%   polynyas called 'OverviewMap.mat'.
 % 
 % Tips
 %   Please specify only one NameList parameter file at a time. And the
@@ -454,8 +455,9 @@ SaveOpenWater(In.SICFile, In.TimeGap, In.Save, In.Lim, In.FastIceFlag, ...
     OverviewOverlap)
 disp(['[', datestr(now), ']   Done'])
 
-disp([newline, 'Output files'' path: ', In.Save.Path, '\'])
 fprintf('\n<strong>** ALL DONE **</strong>\n')
+disp(['Output files'' path: ', In.Save.Path, '\'])
+fprintf('Using the FindPolynyaIDs.m in \\OverviewMapTool to view the overview map.\n')
 load chirp
 sound(y,Fs)
 diary off

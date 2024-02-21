@@ -25,7 +25,7 @@ for i = 1 : length(IDs2)
     if isempty(IDs2{i})
         continue
     end
-    OverviewMap(OverviewMap == i) = IDs2{i}(1);
+    OverviewMap(OverviewMap == i) = min(IDs2{i});
 end
 OverviewMap(logical(In_LandMask)) = NaN;
 
