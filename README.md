@@ -1,5 +1,7 @@
 # DEEP-AA getting started
 
+[toc]
+
 The dataset of Daily Edge of Each Polynyas in Antarctica (DEEP-AA) recorded the daily map of each Antarctica polynya. To create this dataset, we developed a novel polynya tracing and identification method. 
 
 Here is the script to create and envaluate the DEEP-AA dataset. All these codes are writtern in MATLAB. Following is the tutorial to run these scripts, and the detailed document is coming soon.
@@ -106,10 +108,16 @@ And the odd ID numbers indicates open-ocean polynyas and the even ID numbers are
 
 In addiiton, we also output the input parameters to facilitate check (Input.txt).
 
-And to easily find the polynya's IDs, the overview map is also provided (OverviewMap.mat). You can use the [./OverviewMapTool/FindPolynyaIDs.m](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/FindPolynyaIDs.m) to view the overview map and ask the IDs.
-This tool has a GUI, you can do that only by click, and at last the results will be copied automatically.
+And to easily find the polynya's IDs, the overview map is also provided (OverviewMap.mat). You can use the [./OverviewMapTool/PolynyaIDsFinder_Guide.m](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder_Guide.m) (with guide) or [./OverviewMapTool/PolynyaIDsFinder.m](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder.m) (without guide) to view the overview map and ask the IDs.
+This tool has a GUI, you can easily do this with just clicks, and at last the results will be copied automatically.
 
-We also provide a [Python version](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/FindPolynyaIDs.py) of FindPolynyaIDs for users who cannot use MATLAB. 
+Here is a movie abot how to use the PolynyaIDsFinder, and you can also see the [readme for this tool](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/readme)
+
+![PolynyaIDsFinderGuide](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinderGuide.gif)
+
+We also provide a [Python version](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder.py) of PolynyaIDsFinder for users who cannot use MATLAB. 
 But this is translated using ChatGTP, so it is not only not as powerful as MATLAB, but also very slow.
 
-<font size=5>_**Enjoy your DEEP-AA!**_</font>
+The dataset has been evaluated by the codes in [./Evaulate](https://github.com/Mou-si/DEEP/tree/main/Evaluate).
+
+<font size=7>_**Enjoy your DEEP-AA!**_</font>

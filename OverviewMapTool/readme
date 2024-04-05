@@ -1,0 +1,17 @@
+PolynyaIDsFinder: the tool to map the polynyas identified in the DEEP-AA and help you enquiry their IDs easily. 
+
+How to use the PolynyaIDsFinder:
+
+     For first-time users:
+     
+          1) run the PolynyaIDsFinder_Guide.m in MATLAB
+          
+          2) Follow the guide on screen
+          
+     For ones pursue efficiency:
+     
+          1) run the PolynyaIDsFinder.m, in which the guides are removed.
+          
+     For Pythoner:
+     
+          1) run the PolynyaIDsFinder.py, while it is a very simple version, since it is traslated from the MATLAB version by ChatGTP.
