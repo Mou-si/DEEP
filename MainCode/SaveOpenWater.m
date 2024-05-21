@@ -106,7 +106,7 @@ try
                 'The Exist formats are .nc, .hdf, .mat (variable name should be ''Polynya'').'])
     end
 catch
-    SIC = NaN;
+    SIC = NaN; 
 end
 SIC(logical(In_SICFile.LandMask)) = NaN;
 end
