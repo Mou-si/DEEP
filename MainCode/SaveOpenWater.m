@@ -19,14 +19,14 @@ for i = 1 : length(FileName)
     
     % overview overlap revise
         % from SaveOverviewMap.m
-    isOverviewOverlap = ismember(OverviewOverlap.Give, IDs);
+    isOverviewOverlap = ismember(OverviewOverlap.Get, IDs);
     if any(isOverviewOverlap)
-        OverviewOverlapGive_temp = OverviewOverlap.Give(isOverviewOverlap);
         OverviewOverlapGet_temp = OverviewOverlap.Get(isOverviewOverlap);
-        for j = 1 : length(OverviewOverlapGive_temp)
-            PolynyaIDMap(PolynyaIDMap == OverviewOverlapGive_temp(j)) = ...
-                OverviewOverlapGet_temp(j);
-            IDs(IDs == OverviewOverlapGive_temp(j)) = NaN;
+        OverviewOverlapGive_temp = OverviewOverlap.Give(isOverviewOverlap);
+        for j = 1 : length(OverviewOverlapGet_temp)
+            PolynyaIDMap(PolynyaIDMap == OverviewOverlapGet_temp(j)) = ...
+                OverviewOverlapGive_temp(j);
+            IDs(IDs == OverviewOverlapGet_temp(j)) = NaN;
         end
     end
     
