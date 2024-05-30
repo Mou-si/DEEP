@@ -1,10 +1,10 @@
 # DEEP-AA getting started
 
-[toc]
-
 The dataset of Daily Edge of Each Polynyas in Antarctica (DEEP-AA) recorded the daily map of each Antarctica polynya. To create this dataset, we developed a novel polynya tracing and identification method. 
 
-Here is the script to create and envaluate the DEEP-AA dataset. All these codes are writtern in MATLAB. Following is the tutorial to run these scripts, and the detailed document is coming soon.
+Here is the script to create and envaluate the DEEP-AA dataset. All these codes are writtern in MATLAB. Following is the tutorial to run these scripts.
+
+The dataset is available at [https://doi.org/10.5281/zenodo.11379148](https://doi.org/10.5281/zenodo.11379148).
 
 ## Creating the DEEP-AA dataset
 
@@ -77,7 +77,10 @@ FindPolynyaMain('NameList')
 In defult, all figure windows will be closed and youe command wind will be cleared, when you run the `FindPolynyaMain`.
 You can also change these settings if you don't like this.
 ``` MATLAB
-FindPolynyaMain(___, 'clcFlag', 'off', 'closeFlag', 'off')
+FindPolynyaMain(___, 'clcFlag', 'off')
+```
+``` MATLAB
+FindPolynyaMain(___, 'closeFlag', 'off')
 ```
 
 You can also choose to output the diary to the directory of main codes (there is no diary in defult). The diary will be named as Diary_[name of your parameter setting file].
@@ -108,16 +111,16 @@ And the odd ID numbers indicates open-ocean polynyas and the even ID numbers are
 
 In addiiton, we also output the input parameters to facilitate check (Input.txt).
 
-And to easily find the polynya's IDs, the overview map is also provided (OverviewMap.mat). You can use the [./OverviewMapTool/PolynyaIDsFinder_Guide.m](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder_Guide.m) (with guide) or [./OverviewMapTool/PolynyaIDsFinder.m](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder.m) (without guide) to view the overview map and ask the IDs.
+And to easily find the polynya's IDs, the overview map is also provided (OverviewMap.mat). You can use the [./OverviewMapTool/PolynyaIDsFinder_Guide.m](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder_Guide.m) to view the overview map and ask the IDs.
 This tool has a GUI, you can easily do this with just clicks, and at last the results will be copied automatically.
 
 Here is a movie abot how to use the PolynyaIDsFinder, and you can also see the [readme for this tool](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/readme)
 
-![PolynyaIDsFinderGuide](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinderGuide.gif)
+![PolynyaIDsFinder Guide](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder_Guide.gif)
 
-We also provide a [Python version](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder.py) of PolynyaIDsFinder for users who cannot use MATLAB. 
+We also provide a [Python version](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/FindPolynyaIDs.py) of FindPolynyaIDs for users who cannot use MATLAB. 
 But this is translated using ChatGTP, so it is not only not as powerful as MATLAB, but also very slow.
 
 The dataset has been evaluated by the codes in [./Evaulate](https://github.com/Mou-si/DEEP/tree/main/Evaluate).
 
-<font size=7>_**Enjoy your DEEP-AA!**_</font>
+<font size=10>_**Enjoy your DEEP-AA!**_</font>
