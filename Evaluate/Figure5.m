@@ -31,14 +31,10 @@ m_proj('Azimuthal Equal-area', 'lon', 0, 'lat', -90, 'rad', 32)
 [Lon, Lat] = m_ll2xy(Lon, Lat);
 
 % ship-polynya edge disition
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
-DEEPLon = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Longitudes');
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
+DEEPLon = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lon');
+DEEPLat = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lat');
 DEEPLon = double(DEEPLon);
-DEEPLat = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Latitudes');
 DEEPLat = double(DEEPLat);
 % smaller region will be faster in interpplation
 DEEPLat = DEEPLat(200 : 440, 540 : 720); 

@@ -1,15 +1,11 @@
 close all; clear; clc;
 %% read the overview map
-load('G:\AAPSResults\AMSR_SIC60_6.25km_20d\OverviewMap.mat')
+load('G:\DEEP-AAShare\SIC60_6.25km_20d\OverviewMap.mat')
 OverviewMap(isnan(OverviewMap)) = 0;
 PolynyaIDs = unique(OverviewMap);
 
-Lon = hdfread(...
-    'G:\Antaratica_ASI_SIC_6250\LongitudeLatitudeGrid-s6250-Antarctic.hdf', ...
-    'Longitudes');
-Lat = hdfread(...
-    'G:\Antaratica_ASI_SIC_6250\LongitudeLatitudeGrid-s6250-Antarctic.hdf', ...
-    'Latitudes');
+Lon = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lon');
+Lat = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lat');
 
 %% rename the polynya IDs
 % get longitudes of polynyas
@@ -62,7 +58,7 @@ SIC60Path = 'G:\AAPSResults\AMSR_SIC60_6.25km_20d\';
 SIC60Files = dir([SIC60Path, 'AAPS*']);
 PolynyaFrequency = zeros(size(OverviewMap));
 for i = 1 : length(SIC60Files)
-    PolynyaMap = ncread([SIC60Path, SIC60Files(i).name], 'PolynyaIDMaps');
+    PolynyaMap = ncread([SIC60Path, SIC60Files(i).name], 'PolynyaIDMap');
     PolynyaFrequency = PolynyaFrequency + double(PolynyaMap > 100);
 end
 PolynyaFrequency = PolynyaFrequency ./ length(SIC60Files);

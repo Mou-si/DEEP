@@ -1,11 +1,7 @@
 clear; close all; clc;
 load('C:\Users\13098\Documents\冰间湖识别\DataTrans\SITOpenWaterFrequence.mat')
-Lon_DEEP = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Longitudes');
-Lat_DEEP = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Latitudes');
+Lon_DEEP = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lon');
+Lat_DEEP = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lat');
 Lon_SIT = hdfread(...
     ['G:\AMSR36_PSSM\', ...
     'LongitudeLatitudeGrid-s12500-Antarctic.hdf'], 'Longitudes');
@@ -32,7 +28,7 @@ PlotMODIS(MODISPath, datetime('2017-09-25'));
 
 % polynya extent
 hold on
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2017-09-25'), Lon_DEEP, Lat_DEEP)
 
 m_gshhs_h('patch', [0.8, 0.8, 0.8])
@@ -58,7 +54,7 @@ PlotMODIS(MODISPath, datetime('2014-09-11'));
 
 % polynya extent
 hold on
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2014-09-11'), Lon_DEEP, Lat_DEEP)
 
 m_gshhs_h('patch', [0.8, 0.8, 0.8])
@@ -86,7 +82,7 @@ PlotMODIS(MODISPath, datetime('2009-09-08'));
 
 % polynya extent
 hold on
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2009-09-08'), Lon_DEEP, Lat_DEEP)
 
 m_gshhs_h('patch', [0.8, 0.8, 0.8])
@@ -113,7 +109,7 @@ PlotMODIS(MODISPath, datetime('2004-09-13'));
 
 % polynya extent
 hold on
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2004-09-13'), Lon_DEEP, Lat_DEEP)
 
 m_grid('XaxisLocation', 'bottom', 'FontSize', 8)
@@ -164,7 +160,7 @@ MODISPath = 'G:\MODIS\MRP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2005-10-05'));
 hold on
 
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2005-10-05'), Lon_DEEP, Lat_DEEP)
 m_grid('XaxisLocation', 'top', 'FontSize', 8, 'XaxisLocation', 'bottom', 'xtick', [], 'ytick', [], 'box', 'off')
 
@@ -174,7 +170,7 @@ MODISPath = 'G:\MODIS\MRP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2005-10-10'));
 hold on
 
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2005-10-10'), Lon_DEEP, Lat_DEEP)
 m_grid('XaxisLocation', 'top', 'FontSize', 8, 'XaxisLocation', 'bottom', 'xtick', [], 'ytick', [], 'box', 'off')
 
@@ -184,7 +180,7 @@ MODISPath = 'G:\MODIS\MRP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2005-10-14'));
 hold on
 
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2005-10-14'), Lon_DEEP, Lat_DEEP)
 m_grid('XaxisLocation', 'top', 'FontSize', 8, 'XaxisLocation', 'bottom', 'xtick', [], 'ytick', [], 'box', 'off')
 
@@ -194,7 +190,7 @@ MODISPath = 'G:\MODIS\MRP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2018-09-08'));
 hold on
 
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2018-09-08'), Lon_DEEP, Lat_DEEP)
 m_grid('XaxisLocation', 'top', 'FontSize', 8, 'XaxisLocation', 'bottom', 'xtick', [], 'ytick', [], 'box', 'off')
 
@@ -204,7 +200,7 @@ MODISPath = 'G:\MODIS\MRP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2018-09-09'));
 hold on
 
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2018-09-09'), Lon_DEEP, Lat_DEEP)
 m_grid('XaxisLocation', 'top', 'FontSize', 8, 'XaxisLocation', 'bottom', 'xtick', [], 'ytick', [], 'box', 'off')
 
@@ -214,7 +210,7 @@ MODISPath = 'G:\MODIS\MRP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2018-09-12'));
 hold on
 
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2018-09-12'), Lon_DEEP, Lat_DEEP)
 m_grid('XaxisLocation', 'top', 'FontSize', 8, 'XaxisLocation', 'bottom', 'xtick', [], 'ytick', [], 'box', 'off')
 
@@ -227,7 +223,7 @@ m_proj('Azimuthal Equal-area', 'lon', 77, 'lat', -60, 'rad', [120, -70], ...
 MODISPath = 'G:\MODIS\Cooperation Sea\';
 PlotMODIS(MODISPath, datetime('2009-09-08'));
 
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotPSSM(DEEPPath, datetime('2009-09-08'), Lon_DEEP, Lat_DEEP)
 
 m_grid('XaxisLocation', 'bottom', 'FontSize', 8)

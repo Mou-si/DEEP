@@ -1,5 +1,5 @@
 close all; clear; clc;
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_14d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 
 MODISPath = 'G:\MODIS\MRP_SWATH\09\';
 RDataSetName = '/Data Fields/EV_250_Aggr500_RefSB';
@@ -61,12 +61,8 @@ set(gcf, 'units', 'centimeter', 'position', [0, 0, 17, 12.5])
 
 %% plot 2004 and 2016
 % vs. MODIS only
-Lon_DEEP = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Longitudes');
-Lat_DEEP = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Latitudes');
+Lon_DEEP = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lon');
+Lat_DEEP = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lat');
 
 figure
 % 2004

@@ -1,11 +1,7 @@
 close all; clear; clc;
 load('C:\Users\13098\Documents\冰间湖识别\DataTrans\SITOpenWaterFrequence.mat')
-Lon_DEEP = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Longitudes');
-Lat_DEEP = hdfread(...
-    ['G:\Antaratica_ASI_SIC_6250\', ...
-    'LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Latitudes');
+Lon_DEEP = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lon');
+Lat_DEEP = ncread('G:\DEEP-AAShare\SIC60_6.25km_20d\LonLat.nc', 'Lat');
 load('C:\Users\13098\Documents\MATLAB\Othertools\colorbar\MPL_Blues.rgb')
 MPL_Blues = ColorbarRemap(MPL_Blues, 105);
 MPL_Blues(1 : 5, :) = [];
@@ -22,7 +18,7 @@ set(gca, 'CLim', [0, 0.6])
 hold on
 
 % DEEP polynya robust extent
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_20d\OverviewMap.mat';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\OverviewMap.mat';
 OverviewMap = load(DEEPPath);
 OverviewMap = OverviewMap.OverviewMap;
 OverviewMap = OverviewMap > 0;
@@ -77,7 +73,7 @@ MODISPath = 'G:\MODIS\DITP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2013-09-22'));
 
 hold on
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km_20d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotDEEP(DEEPPath, datetime('2013-09-22'), Lon_DEEP, Lat_DEEP)
 
 PlotWinds(datetime('2013-09-22'))
@@ -109,7 +105,7 @@ MODISPath = 'G:\MODIS\DITP_SWATH\09\';
 PlotMODIS(MODISPath, datetime('2015-09-24'));
 
 hold on
-DEEPPath = 'G:\AAPSResults\AMSR_SIC60_6.25km__20d\AAPS_s3125_AMSR_SIC_';
+DEEPPath = 'G:\DEEP-AAShare\SIC60_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 PlotDEEP(DEEPPath, datetime('2015-09-24'), Lon_DEEP, Lat_DEEP)
 
 PlotWinds(datetime('2015-09-24'))
