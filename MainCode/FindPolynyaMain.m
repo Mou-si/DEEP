@@ -4,19 +4,19 @@ function FindPolynyaMain(NameList_Name, varargin)
 % 
 % Syntax
 %   FindPolynyaMain(NameList)
-%   FindPolynyaMain(___, 'clc', clcKey)
-%   FindPolynyaMain(___, 'close', closeKey)
-%   FindPolynyaMain(___, 'diary', diaryKey)
+%   FindPolynyaMain(___, 'clc', clcFlag)
+%   FindPolynyaMain(___, 'close', closeFlag)
+%   FindPolynyaMain(___, 'diary', diaryFlag)
 % 
 % Description
 %   FindPolynyaMain(NameList) identified, trace the polynya and create a
 %       dataset. The "NameList" here is a char of the name of the file 
 %       recording parameters of the algorithm.
-%   FindPolynyaMain(___, 'clc', clcKey) the option to clear the commond
+%   FindPolynyaMain(___, 'clc', clcFlag) the option to clear the commond
 %       window. 'on' is defult.
-%   FindPolynyaMain(___, 'close', closeKey) the option to clear figures. 
+%   FindPolynyaMain(___, 'close', closeFlag) the option to clear figures. 
 %       'on' is defult.
-%   FindPolynyaMain(___, 'diary', diaryKey) the option to write the diary, 
+%   FindPolynyaMain(___, 'diary', diaryFlag) the option to write the diary, 
 %       which is shown on screen. 'off' is defult.
 % 
 % Examples
@@ -27,8 +27,6 @@ function FindPolynyaMain(NameList_Name, varargin)
 %   
 %   % Create the dataset with a diary
 %   FindPolynyaMain('NameList', 'diary', 'on')
-%   disp('the diary is ', ...
-%       [fileparts(which(NameList)), '\Diary_', NameList])
 % 
 % Input Arguments
 %   NameList - Parameter list of the algorithm
@@ -37,14 +35,14 @@ function FindPolynyaMain(NameList_Name, varargin)
 %       the parameter list file of the algorithm. The parameter list file
 %       (name list file) should be a .m file and preferably in the same
 %       path as this file.
-%   clcKey - on-off of clc
+%   clcFlag - on-off of clc
 %       'on' (defult) | 'off'
 %       the switch turing on/off of the clc command (clear the commond
 %       window).
-%   closeKey - on-off of close
+%   closeFlag - on-off of close
 %       'on' (defult) | 'off'
 %       the switch turing on/off of the close command (close all figures).
-%   diaryKey - on-off of diary
+%   diaryFlag - on-off of diary
 %       'on'|'off' (defult)
 %       the switch turing on/off of the diary, which will record what shown
 %       on screen and the output file will be named as 'Diary_'+NameList in
@@ -96,17 +94,11 @@ end
 fprintf(['<strong>** ', NameList_Name, ' **</strong>\n\n'])
 %% sets
 disp(['[', datestr(now), ']   Loading parameters...'])
-[path, ~] = fileparts(fileparts(mfilename('fullpath')));
+[path, ~] = fileparts(mfilename('fullpath'));
 addpath(genpath(path));
 % NameList
-In = eval(NameList_Name);
-In.SICLon(In.SICLon < 0) = In.SICLon(In.SICLon < 0) + 360;
-CheckParameters(In)
-PrintIn(In)
+In = InputParameters(NameList_Name);
 % prepare
-if In.RestartDir(end) ~= '\'
-    In.RestartDir = [In.RestartDir, '\'];
-end
 if In.StartTime ~= In.TimeTotal(1)
     StartTimestr = datestr(In.StartTime, 'yyyymmdd');
     load([In.RestartDir, '\restart', StartTimestr, '.mat']);
@@ -122,12 +114,7 @@ else
         TimeYear(TimeYear > 1) - 1, length(In.TimeTotal)];
     YearCircle = 1;
     DayCircle = 1;
-    In.SeriesLength = In.SeriesLength - 1;
     TimeBefore = In.TimeTotal(1) - days(In.SeriesLength * 2 + 1); % Where before start read SIC
-    if In.FrequencyThres(1) > 1
-        In.FrequencyThres = In.FrequencyThres ./ (In.SeriesLength + 1);
-    end
-    In.FrequencyThres = sort(In.FrequencyThres, 'descend');
 end
 disp(['[', datestr(now), ']   Done'])
 Membership.Data = zeros(size(In.SICLat, 1), size(In.SICLat, 2), ...
@@ -183,13 +170,14 @@ for i = DayCircle : length(Time)
         save(RestartFile, VarName{:});
         clear VarName VarNameNotSave
         disp(['[', datestr(now), ']   Done.', newline, 'Restart File Path: ', RestartFile])
-        for RestartFilei = 1 : length(RestartFiles)
-            if isequal(RestartFiles(RestartFilei).name, 'restartLastTime.mat')
-                continue
-            end
-            delete([In.RestartDir, ...
-                cat(1, RestartFiles(RestartFilei).name)])
-        end
+%       % when you don't have enough disk, delete some RestartFiles
+%         for RestartFilei = 1 : length(RestartFiles)
+%             if isequal(RestartFiles(RestartFilei).name, 'restartLastTime.mat')
+%                 continue
+%             end
+%             delete([In.RestartDir, ...
+%                 cat(1, RestartFiles(RestartFilei).name)])
+%         end
     end
     disp(['[', datestr(now), ']   ', ...
         num2str(i + TimeYear(1, yeari) - 1), '/', num2str(length(In.TimeTotal)), ...
@@ -404,7 +392,7 @@ clearvars -except CircumPolar DayCircle In LastOpenWater Membership MoveMeanSIC 
     TotalLastOpenWaterYear isOpenWaterCurrent DiaryFlag
 
 VarName = who;
-save(['C:\Users\13098\Documents\ï¿½ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½\Data\tempData', ...
+save(['C:\Users\13098\Documents\±ù¼äºþÊ¶±ð\Data\tempData', ...
     num2str(yeari + 2003), '.mat'], VarName{:});
 
 In.StartTime = In.TimeTotal(1);
