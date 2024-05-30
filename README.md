@@ -116,7 +116,7 @@ This tool has a GUI, you can easily do this with just clicks, and at last the re
 
 Here is a movie abot how to use the PolynyaIDsFinder, and you can also see the [readme for this tool](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/readme)
 
-![PolynyaIDsFinder Guide](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinder_Guide.gif)
+![PolynyaIDsFinder Guide](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/PolynyaIDsFinderGuide.gif)
 
 We also provide a [Python version](https://github.com/Mou-si/DEEP/blob/main/OverviewMapTool/FindPolynyaIDs.py) of FindPolynyaIDs for users who cannot use MATLAB. 
 But this is translated using ChatGTP, so it is not only not as powerful as MATLAB, but also very slow.
