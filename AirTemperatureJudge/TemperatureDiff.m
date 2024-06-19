@@ -89,7 +89,7 @@ for i = 1 : size(MachineIDList, 1)
             min(LatLim) : max(LatLim));
         LatTemp = LatTempe(min(LonLim) : max(LonLim), ...
             min(LatLim) : max(LatLim));
-        if LatTemp(2) == -55
+        if LatTemp(2) == 40 || LatTemp(2) == -55
             MeanTempeDiff(i) = -99;
             continue
         end

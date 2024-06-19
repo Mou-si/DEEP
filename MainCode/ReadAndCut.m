@@ -42,12 +42,7 @@ TimeEnd = TimeEnd(end - j + 1);
 TimeStr = datestr(TimeEnd, 'yyyymmdd');
 FileNameNo = 1;
 if ~isempty(In_TimeGap)
-    for i = 1 : length(In_TimeGap)
-        if TimeEnd >= In_TimeGap(i)
-            FileNameNo = i + 1;
-            break
-        end
-    end
+    FileNameNo = sum(double(TimeEnd >= In_TimeGap)) + 1;
 end
 try
     switch In_SICFile.Name2{FileNameNo}(end - 2 : end)
@@ -98,11 +93,13 @@ function SIC = CutOpenSea(SIC, Lim)
 % The largest open water must be open sea, and we use 100 to delete it and
 % land
 OpenWater = (SIC <= Lim);
-OpenWater = bwlabel(OpenWater);
-Areatemp = regionprops(OpenWater, 'Area');
-Areatemp = cat(1, Areatemp.Area);
-Areatemp = find(Areatemp == max(Areatemp), 1);
-SIC(OpenWater == Areatemp) = 100;
+OpenWater2 = imclearborder(OpenWater);
+SIC(xor(OpenWater, OpenWater2)) = 100;
+% OpenWater = bwlabel(OpenWater);
+% Areatemp = regionprops(OpenWater, 'Area');
+% Areatemp = cat(1, Areatemp.Area);
+% Areatemp = find(Areatemp == max(Areatemp), 1);
+% SIC(OpenWater == Areatemp) = 100;
 SIC(isnan(SIC)) = 100;
 end
 

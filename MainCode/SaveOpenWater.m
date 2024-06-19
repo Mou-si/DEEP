@@ -14,8 +14,8 @@ for i = 1 : length(FileName)
     end
     
     % read map
-    PolynyaIDMap = ncread(fullfile(In_Save.Path, FileName(i, :).name), 'PolynyaIDMap');
-    IDs = ncread(fullfile(In_Save.Path, FileName(i, :).name), 'PolynyaIDs');
+    PolynyaIDMap = ncread(fullfile(In_Save.Path, FileName(i, :).name), 'Map');
+    IDs = ncread(fullfile(In_Save.Path, FileName(i, :).name), 'IDs');
     
     % overview overlap revise
         % from SaveOverviewMap.m
@@ -60,9 +60,9 @@ for i = 1 : length(FileName)
     end
     PolynyaIDMap(isnan(SIC)) = NaN;
     ncwrite(fullfile(In_Save.Path, FileName(i, :).name), ...
-        'PolynyaIDMap', PolynyaIDMap);
+        'Map', PolynyaIDMap);
     ncwrite(fullfile(In_Save.Path, FileName(i, :).name), ...
-        'PolynyaIDs', IDs);
+        'IDs', IDs);
     Time_before = datenum(Time);
 end
 end
@@ -73,12 +73,7 @@ function SIC = ReadOneDay(Time, In_SICFile, In_TimeGap)
 TimeStr = datestr(Time, 'yyyymmdd');
 FileNameNo = 1;
 if ~isempty(In_TimeGap)
-    for i = 1 : length(In_TimeGap)
-        if Time >= In_TimeGap(i)
-            FileNameNo = i + 1;
-            break
-        end
-    end
+    FileNameNo = sum(double(Time >= In_TimeGap)) + 1;
 end
 try
     switch In_SICFile.Name2{FileNameNo}(end - 2 : end)
@@ -106,7 +101,7 @@ try
                 'The Exist formats are .nc, .hdf, .mat (variable name should be ''Polynya'').'])
     end
 catch
-    SIC = NaN; 
+    SIC = NaN;
 end
 SIC(logical(In_SICFile.LandMask)) = NaN;
 end

@@ -5,7 +5,7 @@ InSave = In.Save;
 InSICFile = In.SICFile;
 In = rmfield(In, 'Save');
 In = rmfield(In, 'SICFile');
-if isequal(class(In.TimeGap), 'datetime')
+if isequal(class(In.TimeGap), 'datetime') && length(In.TimeGap) == 1
     In.TimeGap = datestr(In.TimeGap, 'yyyy-mm-dd');
 end
 if isequal(class(In.StartTime), 'datetime')
@@ -75,9 +75,7 @@ end
 
 fid = fopen([InSave.Path, '\Inputs.txt'], 'w');
 
-fwrite(fid, ['Daily Edge of Each Polynya in Antarctic (DEEP-AA) v0.7.4', newline], 'char');
-fwrite(fid, [newline, repmat('-', 1, 50), newline], 'char');
-fwrite(fid, [newline, 'Creating Time: ', datestr(now), newline], 'char');
+fwrite(fid, ['Creating Time: ', datestr(now), newline], 'char');
 fwrite(fid, [newline, 'MATLAB version: ', version, newline], 'char');
 fwrite(fid, [newline, repmat('-', 1, 50), newline], 'char');
 
@@ -107,9 +105,6 @@ fwrite(fid, struct2str(InSICFile), 'char');
 
 fwrite(fid, [newline, 'Output Files:', newline], 'char');
 fwrite(fid, struct2str(InSave), 'char');
-
-fwrite(fid, [newline, repmat('-', 1, 50), newline], 'char');
-fwrite(fid, [newline, 'End'], 'char');
 
 fclose(fid);
 

@@ -95,6 +95,7 @@ fprintf(['<strong>** ', NameList_Name, ' **</strong>\n\n'])
 %% sets
 disp(['[', datestr(now), ']   Loading parameters...'])
 [path, ~] = fileparts(mfilename('fullpath'));
+[path, ~] = fileparts(path);
 addpath(genpath(path));
 % NameList
 In = InputParameters(NameList_Name);

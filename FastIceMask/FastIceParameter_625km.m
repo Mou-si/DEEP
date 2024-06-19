@@ -1,17 +1,23 @@
 function FastIceFlag = FastIceParameter
 % The function is used to set the parameter of Land Fast Ice Mask mode.
-% Now this functio is applied to the Fraser land fast-ice mask. You can 
-% download it here (doi:10.26179/5d267d1ceb60c) and some pretreatment is
-% needed.
+% Now this functio is applied to the Fraser landfast-ice mask and NIC 
+% landfast-ice. You can download it here (doi:10.26179/5d267d1ceb60c 
+% and doi: 10.7265/46cc-3952) and some pretreatment is needed.
 
 global FastIce
 
-FastIce.TimeCover = datetime('2000-01-01') : datetime('2018-02-28');
-FastIce.Dir = 'G:\FraserLandFastIce\nc_12500\';
-FastIce.Name1 = '';
-FastIce.Name2 = '.nc';
-FastIce.VarName = 'LandFastIce';
+FastIce.TimeCover = {datetime('2000-01-01') : datetime('2018-02-28'), ...
+    datetime('2018-03-01') : datetime('2022-12-31')};
+FastIce.Dir = {'G:\FraserLandFastIce\nc_6250\', 'G:\NIC\SH\FastIce_6.25\'};
+FastIce.Name1 = {'', 'sh_'};
+FastIce.Name2 = {'.nc', '.nc'};
+FastIce.VarName = {'LandFastIce', 'LandFastIce'};
 
-FastIce.TimeCover = [min(datenum(FastIce.TimeCover)), max(datenum(FastIce.TimeCover))];
+for i = 1 : length(FastIce.TimeCover)
+    TimeCovertemp(i, :) = [min(datenum(FastIce.TimeCover{i})), ...
+        max(datenum(FastIce.TimeCover{i}))];
+end
+FastIce.TimeCover = TimeCovertemp;
+clear TimeCovertemp
 FastIceFlag = true;
 end

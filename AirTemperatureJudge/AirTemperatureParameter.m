@@ -28,14 +28,14 @@ function TempeJudgeFlag = AirTemperatureParameter
 global T2m_FileDir     T2m_Files1     T2m_TimeForm     T2m_Files2   T2m_Name
 global T_Ocean        T_DiffThreshold
 
-T2m_FileDir     = 'G:\ERA5Data';
-T2m_Files1      = 'ERA5-SignalLevel-TPDUShortWaveCloud-';
+T2m_FileDir     = 'G:\ERA5Data_NH';
+T2m_Files1      = 'ERA5-SignalLevel-T2m';
 T2m_TimeForm	= 'yyyymmdd';
 T2m_Files2      = '.nc';
 T2m_Name        = 't2m';
 
 T_Ocean         = 273.15 - 1.86;
-T_DiffThreshold  = 3;
+T_DiffThreshold  = 5;
 
 %% get axis
 ReanalysisLonLat;
