@@ -13,6 +13,8 @@ copyfile('./FastIceMask/FastIceParameter_625km.m', './FastIceMask/FastIceParamet
 FindPolynyaMain('NameList_DailyTracem')
 FindPolynyaMain('NameList_DailyTracep')
 FindPolynyaMain('NameList_NoFastIce')
+FindPolynyaMain('NameList_SIC30')
+FindPolynyaMain('NameList_SIC40')
 FindPolynyaMain('NameList_SIC50')
 FindPolynyaMain('NameList_SIC60')
 FindPolynyaMain('NameList_SIC70')

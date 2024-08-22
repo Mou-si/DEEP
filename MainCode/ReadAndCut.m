@@ -95,11 +95,6 @@ function SIC = CutOpenSea(SIC, Lim)
 OpenWater = (SIC <= Lim);
 OpenWater2 = imclearborder(OpenWater);
 SIC(xor(OpenWater, OpenWater2)) = 100;
-% OpenWater = bwlabel(OpenWater);
-% Areatemp = regionprops(OpenWater, 'Area');
-% Areatemp = cat(1, Areatemp.Area);
-% Areatemp = find(Areatemp == max(Areatemp), 1);
-% SIC(OpenWater == Areatemp) = 100;
 SIC(isnan(SIC)) = 100;
 end
 

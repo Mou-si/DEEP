@@ -141,13 +141,23 @@ save([SavePath, 'SIC_6.25km_60_20d.mat'], ...
    'Area', 'Area_U', 'IDs_d', 'IDs_y', 'IDs');
 
 %%
-Path = 'G:\DEEP-AAShare\SIC70_6.25km_20d\DEEP_s6250_AMSR_SIC_';
+Path = 'G:\DEEP-AAShare\SIC30_6.25km_20d\DEEP_s6250_AMSR_SIC_';
 [Area, IDs_d, IDs_y, IDs] = GetAreaNum(Time, Path, YearLength);
 Area_U = bootstrp(length(Area), @mean, Area);
 Area_U = [prctile(Area_U, 2.5), prctile(Area_U, 97.5)];
 Area = Area * 6.25 * 6.25;
 Area_U = Area_U * 6.25 * 6.25;
-save([SavePath, 'SIC_6.25km_70_20d.mat'], ...
+save([SavePath, 'SIC_6.25km_30_20d.mat'], ...
+   'Area', 'Area_U', 'IDs_d', 'IDs_y', 'IDs');
+
+%%
+Path = 'G:\DEEP-AAShare\SIC40_6.25km_20d\DEEP_s6250_AMSR_SIC_';
+[Area, IDs_d, IDs_y, IDs] = GetAreaNum(Time, Path, YearLength);
+Area_U = bootstrp(length(Area), @mean, Area);
+Area_U = [prctile(Area_U, 2.5), prctile(Area_U, 97.5)];
+Area = Area * 6.25 * 6.25;
+Area_U = Area_U * 6.25 * 6.25;
+save([SavePath, 'SIC_6.25km_40_20d.mat'], ...
    'Area', 'Area_U', 'IDs_d', 'IDs_y', 'IDs');
 
 %%
@@ -158,6 +168,16 @@ Area_U = [prctile(Area_U, 2.5), prctile(Area_U, 97.5)];
 Area = Area * 6.25 * 6.25;
 Area_U = Area_U * 6.25 * 6.25;
 save([SavePath, 'SIC_6.25km_50_20d.mat'], ...
+   'Area', 'Area_U', 'IDs_d', 'IDs_y', 'IDs');
+
+%%
+Path = 'G:\DEEP-AAShare\SIC70_6.25km_20d\DEEP_s6250_AMSR_SIC_';
+[Area, IDs_d, IDs_y, IDs] = GetAreaNum(Time, Path, YearLength);
+Area_U = bootstrp(length(Area), @mean, Area);
+Area_U = [prctile(Area_U, 2.5), prctile(Area_U, 97.5)];
+Area = Area * 6.25 * 6.25;
+Area_U = Area_U * 6.25 * 6.25;
+save([SavePath, 'SIC_6.25km_70_20d.mat'], ...
    'Area', 'Area_U', 'IDs_d', 'IDs_y', 'IDs');
 
 %%
