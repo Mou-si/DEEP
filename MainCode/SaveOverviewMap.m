@@ -42,4 +42,8 @@ for i = 1 : length(IDs2)
     end
 end
 
+if ~exist('OverviewOverlap', 'var')
+    OverviewOverlap.Get = [];
+    OverviewOverlap.Give = [];
+end
 end

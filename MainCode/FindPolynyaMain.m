@@ -206,7 +206,7 @@ for i = DayCircle : length(Time)
     % read needed data and cut open seas
     [Membership, LossSIC] = ReadAndCut(Membership, TimeAdvance, ...
         Time(i) - days(In.SeriesLength) : Time(i) + days(In.SeriesLength), ...
-        In.TimeGap, LossSIC, In.SICFile, In.Lim, In.MapRange, In.FastIceFlag);
+        In.TimeGap, LossSIC, In.SICFile, In.Lim, In.FastIceFlag);
     if LossSIC ~= 0
         LossData(i) = true;
     end
@@ -397,9 +397,9 @@ else
     % for the first year, we don't need to link
     TotalLastOpenWaterYear.i = 1;
     TotalLastOpenWaterYear.Data = AllIndex;
-    MachineIDSterYear(2) = max(MachineIDSeriesYear);
-    AllIndexeriesYear = unique(AllIndex)';
-    MaxOpenWaSparse = sparse(AllIndex);
+    MachineIDSeriesYear = unique(AllIndex)';
+    MaxOpenWaterYear(2) = max(MachineIDSeriesYear);
+    AllIndexSparse = sparse(AllIndex);
     AllIndexIndex = cell(1, MaxOpenWaterYear(2));
     for k = 1 : MaxOpenWaterYear(2)
         AllIndexIndex{1, k} = find(AllIndexSparse == k);
@@ -422,12 +422,12 @@ end
 %% Save Cache
 if str2double(datestr(In.TimeTotal(TimeYear(2, yeari)), 'mmdd')) <= ...
         str2double(In.NewYear([1 : 2, 4 : 5]))
-    save([In.Cache, '\AAPSCacheforYear', ...
+    save([In.Cache, '\DEEPCacheforYear', ...
         num2str(year(In.TimeTotal(TimeYear(2, yeari)))-1), '.mat'], ...
         'LogIncludePhy', 'OpenWaterCurrent', 'IDYeartoCrossYear', ...
         'GreatTempeDiffMat');
 else
-    save([In.Cache, '\AAPSCacheforYear', ...
+    save([In.Cache, '\DEEPCacheforYear', ...
         num2str(year(In.TimeTotal(TimeYear(2, yeari)))), '.mat'], ...
         'LogIncludePhy', 'OpenWaterCurrent', 'IDYeartoCrossYear', ...
         'GreatTempeDiffMat');

@@ -1,5 +1,5 @@
 function [Membership, LossSIC] = ReadAndCut(Membership, TimeAdvance, Time, ...
-        In_TimeGap, LossSIC, In_SICFile, In_Lim, In_MapRange, In_FastIceFlag)
+        In_TimeGap, LossSIC, In_SICFile, In_Lim, In_FastIceFlag)
 
 % get new data order
 if isempty(Membership.i)
@@ -19,11 +19,7 @@ for j = TimeAdvance : -1 : 1
     
     if LossSIC == 0
         SIC = CutOpenSea(SIC, In_Lim);
-        if diff(In_MapRange) > 0
-            temp = RemapMembership(SIC, In_MapRange);
-        else
-            temp = SIC <= In_MapRange(1);
-        end
+        temp = SIC <= In_Lim;
         Membership.Data(:, :, j == Membership.i) = temp;
     else
         temp = j - LossSIC;
