@@ -37,12 +37,8 @@ In.TimeTotal = ... The time you want to identify polynyas
     [datetime('2003-02-01') : datetime('2003-10-15'), ...
     datetime('2004-02-01') : datetime('2011-08-31'), ...
     datetime('2012-08-01') : datetime('2023-01-31')];
-% In.TimeTotal = ... The time you want to identify polynyas
-%     datetime('2017-02-01') : datetime('2018-01-31');
 TimeTotalmmdd = str2double(string(datestr(In.TimeTotal, 'mmdd')));
 In.TimeTotal = In.TimeTotal(TimeTotalmmdd >= 0401 & TimeTotalmmdd <= 1031);
-% In.TimeTotal = [In.TimeTotal(1 : 2813), datetime('2017-11-01') : datetime('2017-11-15'), In.TimeTotal(2814 : end)];
-%     datetime('2014-02-01') : datetime('2015-01-31');
 
 In.TimeGap = [datetime('2003-12-01'), datetime('2012-07-01')];
 In.StartTime = In.TimeTotal(1);
@@ -52,9 +48,9 @@ In.NewYear = '02-01';
 % we will read data as [SICDir \ SICFileName1 Timestr SICFileName2]
 In.SICFile.Dir = ...
     'G:\Antaratica_ASI_SIC_6250';
-In.SICFile.Name1 = ...%     {'asi-AMSR2-s3125-'};
+In.SICFile.Name1 = ...
     {'asi-s6250-', 'asi-s6250-', 'asi-AMSR2-s6250-'};
-In.SICFile.Name2 = ...%     {'-v5.4.hdf'};
+In.SICFile.Name2 = ...
     {'-v5.4.hdf', '-v5.4.hdf', '-v5.4.hdf'};
 In.SICFile.VarName = ...
     'ASI Ice Concentration';
@@ -63,9 +59,6 @@ In.SICLon = hdfread(...
     [In.SICFile.Dir, '\LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Longitudes');
 In.SICLat = hdfread(...
     [In.SICFile.Dir, '\LongitudeLatitudeGrid-s6250-Antarctic.hdf'], 'Latitudes');
-% In.SICLon = load('G:\Antaratica_ASI_SIC_6250\LonLat_25000.mat');
-% In.SICLat = In.SICLon.Lat;
-% In.SICLon = In.SICLon.Lon;
 % read land mask
 In.SICFile.LandMask = ncread([In.SICFile.Dir, '\LandMaskAMSR6250.nc'], 'LandMask');
 % set the resolution
@@ -84,9 +77,6 @@ In.SeriesLength = ... The length of identify time series
 % the FrequencyThreshold is calculated as FrequencyThreshold ./ SeriesLength
 In.FrequencyThres = ... the threshold for frequent openwater. it is a 1*2 vector
     [0.7, 0.5];
-
-In.MapRange = ... Remapping for membership of openwater
-    [60, 60];
 
 %% Match
 global IDCpacity
